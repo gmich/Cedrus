@@ -30,8 +30,36 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="Autofac, Version=4.0.0.0, Culture=neutral, PublicKeyToken=17863af14b0044da, processorArchitecture=MSIL">
+      <HintPath>..\packages\Autofac.4.0.0\lib\net451\Autofac.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="Autofac.Extras.Attributed, Version=3.0.0.0, Culture=neutral, PublicKeyToken=17863af14b0044da, processorArchitecture=MSIL">
+      <HintPath>..\packages\Autofac.Extras.Attributed.3.1.0\lib\net40\Autofac.Extras.Attributed.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="Autofac.Extras.DynamicProxy2, Version=3.0.0.0, Culture=neutral, PublicKeyToken=17863af14b0044da, processorArchitecture=MSIL">
+      <HintPath>..\packages\Autofac.Extras.DynamicProxy2.3.0.2\lib\net40\Autofac.Extras.DynamicProxy2.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="Autofac.Integration.Mef, Version=4.0.0.0, Culture=neutral, PublicKeyToken=17863af14b0044da, processorArchitecture=MSIL">
+      <HintPath>..\packages\Autofac.Mef.4.0.0\lib\net45\Autofac.Integration.Mef.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="Castle.Core, Version=3.2.0.0, Culture=neutral, PublicKeyToken=407dd0808d44fbdc, processorArchitecture=MSIL">
+      <HintPath>..\packages\Castle.Core.3.2.2\lib\net45\Castle.Core.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
     <Reference Include="MonoGame.Framework, Version=3.5.1.1679, Culture=neutral, processorArchitecture=MSIL">
       <HintPath>..\packages\MonoGame.Framework.DesktopGL.3.5.1.1679\lib\net40\MonoGame.Framework.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="Newtonsoft.Json, Version=9.0.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed, processorArchitecture=MSIL">
+      <HintPath>..\packages\Newtonsoft.Json.9.0.1\lib\net45\Newtonsoft.Json.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="NLog, Version=4.0.0.0, Culture=neutral, PublicKeyToken=5120e14c03d0593c, processorArchitecture=MSIL">
+      <HintPath>..\packages\NLog.4.3.11\lib\net45\NLog.dll</HintPath>
       <Private>True</Private>
     </Reference>
     <Reference Include="NVorbis, Version=0.8.4.0, Culture=neutral, processorArchitecture=MSIL">
@@ -55,7 +83,23 @@
     <Compile Include="Camera\Camera.cs" />
     <Compile Include="Camera\CameraExtensions.cs" />
     <Compile Include="Camera\ICamera.cs" />
+    <Compile Include="Common\DisposableEntry.cs" />
+    <Compile Include="Logging\IAppender.cs" />
+    <Compile Include="Logging\InterceptorModule.cs" />
+    <Compile Include="Logging\InvocationContext.cs" />
+    <Compile Include="Common\Option.cs" />
+    <Compile Include="Common\PrimitiveOnlyResolver.cs" />
+    <Compile Include="Common\State.cs" />
+    <Compile Include="Common\Union.cs" />
     <Compile Include="Common\VectorExtensions.cs" />
+    <Compile Include="Common\GenericResult.cs" />
+    <Compile Include="Common\Result.cs" />
+    <Compile Include="Common\ResultExtensions.cs" />
+    <Compile Include="Logging\SimpleLogInterceptor.cs" />
+    <Compile Include="Rendering\Identity.cs" />
+    <Compile Include="Rendering\RenderedObject.cs" />
+    <Compile Include="Rendering\TargetRenderer.cs" />
+    <Compile Include="CendrusModule.cs" />
     <Compile Include="Timeline\GameTimeline.cs" />
     <Compile Include="Timeline\ITimeline.cs" />
     <Compile Include="Timeline\TimeLine.cs" />
@@ -68,8 +112,10 @@
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
+    <None Include="app.config" />
     <None Include="packages.config" />
   </ItemGroup>
+  <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
     <PostBuildEvent>$(ProjectDir)$(OutDir)Gmich.Cedrus.Weaving.exe</PostBuildEvent>
