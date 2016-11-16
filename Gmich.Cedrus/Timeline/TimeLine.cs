@@ -1,26 +1,21 @@
 ﻿using System;
 
-namespace Gmich.Cedrus.Timeline
+namespace Gmich.Cedrus
 {
-    public class Timeline : ITimeline
+    public class Timeline
     {
         private readonly Func<double> timeProvider;
+        private readonly Func<double> total;
 
-        public static ITimeline Default { get; } = new GameTimeline();
-
-        public static ITimeline FromFactory(Func<double> timeProvider) => new Timeline(timeProvider);
-
-        internal Timeline(Func<double> timeProvider)
+        public Timeline(Func<double> timeProvider, Func<double> total)
         {
             this.timeProvider = timeProvider;
+            this.total = total;
         }
 
-        public TimeSpan DeltaTime
-        {
-            get { return TimeSpan.FromSeconds(timeProvider()); }
-        }
+        public TimeSpan DeltaTime => TimeSpan.FromSeconds(timeProvider());
 
-
+        public TimeSpan TotalTime => TimeSpan.FromSeconds(total());
     }
 }
 

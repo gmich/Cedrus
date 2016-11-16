@@ -4,9 +4,10 @@ using System;
 
 namespace Gmich.Cedrus.Rendering
 {
-    public sealed class RenderedObject
+    public sealed class RenderedText
     {
-        private readonly Func<Texture2D> texture;
+        private readonly Func<SpriteFont> font;
+        private readonly Func<string> text;
         private readonly Func<Vector2> position;
         private readonly Func<Color> color;
         private readonly Func<float> rotation;
@@ -14,12 +15,11 @@ namespace Gmich.Cedrus.Rendering
         private readonly Func<Vector2> origin;
         private readonly Func<SpriteEffects> effects;
         private readonly Func<float> layer;
-        private readonly Func<Rectangle> textureRectangle;
 
-        public RenderedObject(Func<Texture2D> texture, Func<Rectangle> textureRectangle, Func<Vector2> position, Func<Color> color, Func<float> rotation, Func<Vector2> scale, Func<Vector2> origin, Func<SpriteEffects> effects, Func<float> layer)
+        public RenderedText(Func<SpriteFont> font, Func<string> text, Func<Vector2> position, Func<Color> color, Func<float> rotation, Func<Vector2> scale, Func<Vector2> origin, Func<SpriteEffects> effects, Func<float> layer)
         {
-            this.texture = texture;
-            this.textureRectangle = textureRectangle;
+            this.font = font;
+            this.text = text;
             this.position = position;
             this.color = color;
             this.rotation = rotation;
@@ -29,8 +29,8 @@ namespace Gmich.Cedrus.Rendering
             this.layer = layer;
         }
 
-        public Texture2D Texture => texture();
-        public Rectangle TextureRectangle => textureRectangle();
+        public SpriteFont SpriteFont => font();
+        public string Text => text();
         public Vector2 Position => position();
         public Color Color => color();
         public float Rotation => rotation();

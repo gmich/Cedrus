@@ -3,15 +3,14 @@ using System.Collections.Generic;
 
 namespace Gmich.Cedrus
 {
-    public sealed class DisposableEntry<TEntry> : IDisposable
+    public sealed class DisposableEntry : IDisposable
     {
-        private readonly IList<TEntry> registered;
-        private readonly TEntry current;
+        private readonly Action disposal;
+        private bool isDisposed = false;
 
-        internal DisposableEntry(IList<TEntry> registered, TEntry current)
+        internal DisposableEntry(Action disposal)
         {
-            this.registered = registered;
-            this.current = current;
+            this.disposal = disposal;
         }
 
         public void Dispose()
@@ -20,33 +19,39 @@ namespace Gmich.Cedrus
             GC.SuppressFinalize(this);
         }
 
-        private bool isDisposed = false;
         private void Dispose(bool disposing)
         {
             if (disposing && !isDisposed)
             {
-                if (registered.Contains(current))
-                    registered.Remove(current);
+                disposal();
                 isDisposed = true;
             }
         }
     }
 
-    public static class Disposable 
+    public static class Disposable
     {
-        public static DisposableEntry<TEntry> For<TEntry>(IList<TEntry> registered, TEntry current)
-        {
-            return new DisposableEntry<TEntry>(registered, current);
-        }
+        public static IDisposable For(Action disposal) => new DisposableEntry(disposal);
 
-        public static IDisposable ThatDoesNothing => new DoNothingDisposable();
+        public static IDisposable ForList<TEntry>(IList<TEntry> list, TEntry item)
+         => new DisposableEntry(() =>
+         {
+             if (list.Contains(item))
+             {
+                 list.Remove(item);
+             }
+         });
+
+        public static IDisposable ForDictionary<TId, TValue>(IDictionary<TId, TValue> dictionary, TId id)
+        => new DisposableEntry(() =>
+        {
+            if (dictionary.ContainsKey(id))
+            {
+                dictionary.Remove(id);
+            }
+        });
+
+        public static IDisposable ThatDoesNothing => new DisposableEntry(() => { });
     }
 
-    public class DoNothingDisposable : IDisposable
-    {
-        public void Dispose()
-        {
-            return;
-        }
-    }
 }

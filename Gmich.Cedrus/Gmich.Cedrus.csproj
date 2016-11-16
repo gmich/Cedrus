@@ -84,6 +84,20 @@
     <Compile Include="Camera\CameraExtensions.cs" />
     <Compile Include="Camera\ICamera.cs" />
     <Compile Include="Common\DisposableEntry.cs" />
+    <Compile Include="CedrusGame.cs" />
+    <Compile Include="Content\AContainer.cs" />
+    <Compile Include="Content\AssetContainer.cs" />
+    <Compile Include="Content\ContentContainer.cs" />
+    <Compile Include="Entities\GameEntity.cs" />
+    <Compile Include="GameSettings.cs" />
+    <Compile Include="Input\GamePadInput.cs" />
+    <Compile Include="Input\IInput.cs" />
+    <Compile Include="Input\InputConfiguration.cs" />
+    <Compile Include="Input\InputManager.cs" />
+    <Compile Include="Input\KeyboardInput.cs" />
+    <Compile Include="Input\KeyboardUtils.cs" />
+    <Compile Include="Input\MouseInput.cs" />
+    <Compile Include="Input\TouchInput.cs" />
     <Compile Include="Logging\IAppender.cs" />
     <Compile Include="Logging\InterceptorModule.cs" />
     <Compile Include="Logging\InvocationContext.cs" />
@@ -96,14 +110,20 @@
     <Compile Include="Common\Result.cs" />
     <Compile Include="Common\ResultExtensions.cs" />
     <Compile Include="Logging\SimpleLogInterceptor.cs" />
-    <Compile Include="Rendering\Identity.cs" />
-    <Compile Include="Rendering\RenderedObject.cs" />
-    <Compile Include="Rendering\TargetRenderer.cs" />
+    <Compile Include="Common\Identity.cs" />
+    <Compile Include="Rendering\ARenderer.cs" />
+    <Compile Include="Rendering\RenderedText.cs" />
+    <Compile Include="Rendering\RenderedComponent.cs" />
+    <Compile Include="Rendering\LayerRenderer.cs" />
     <Compile Include="CendrusModule.cs" />
-    <Compile Include="Timeline\GameTimeline.cs" />
-    <Compile Include="Timeline\ITimeline.cs" />
+    <Compile Include="Rendering\RenderingUtilities.cs" />
+    <Compile Include="Rendering\ScreenRenderer.cs" />
+    <Compile Include="Scene\ISceneHost.cs" />
+    <Compile Include="Scene\SceneSettings.cs" />
     <Compile Include="Timeline\TimeLine.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="Timeline\TimeManager.cs" />
+    <Compile Include="Timeline\TimeModule.cs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Gmich.Cedrus.Weaving\Gmich.Cedrus.Weaving.csproj">
@@ -113,9 +133,12 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="app.config" />
+    <None Include="log.config" />
     <None Include="packages.config" />
   </ItemGroup>
-  <ItemGroup />
+  <ItemGroup>
+    <Folder Include="Mechanics\" />
+  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
     <PostBuildEvent>$(ProjectDir)$(OutDir)Gmich.Cedrus.Weaving.exe</PostBuildEvent>
