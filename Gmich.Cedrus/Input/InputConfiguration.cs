@@ -5,20 +5,22 @@ namespace Gmich.Cedrus.Input
 {
     public class InputConfiguration
     {
-        public Dictionary<Func<bool>, Action> Entries { get; }
-                
-        public InputConfiguration(Dictionary<Func<bool>,Action> inputEventAndAction)
-        {
-            Entries = inputEventAndAction;
-        }
+        private readonly List<Tuple<Predicate<InputManager>, Action>> config = new List<Tuple<Predicate<InputManager>, Action>>();
 
-        public void InvokeApplicableActions()
+        public IDisposable Add(Predicate<InputManager> input, Action action)
         {
-            foreach(var entry in Entries)
+            var tuple = Tuple.Create(input, action);
+            config.Add(tuple);
+            return Disposable.ForList(config, tuple);
+        }        
+
+        public void Check(InputManager inputManager)
+        {
+            foreach(var entry in config)
             {
-                if(entry.Key())
+                if(entry.Item1(inputManager))
                 {
-                    entry.Value.Invoke();
+                    entry.Item2.Invoke();
                 }
             }
         }

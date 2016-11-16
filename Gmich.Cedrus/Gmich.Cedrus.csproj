@@ -88,7 +88,11 @@
     <Compile Include="Content\AContainer.cs" />
     <Compile Include="Content\AssetContainer.cs" />
     <Compile Include="Content\ContentContainer.cs" />
-    <Compile Include="Entities\GameEntity.cs" />
+    <Compile Include="Entities\CollisionPoint.cs" />
+    <Compile Include="Entities\CollisionBox.cs" />
+    <Compile Include="Entities\DynamicEntity.cs" />
+    <Compile Include="Entities\ICollidable.cs" />
+    <Compile Include="Entities\LifetimeObject.cs" />
     <Compile Include="GameSettings.cs" />
     <Compile Include="Input\GamePadInput.cs" />
     <Compile Include="Input\IInput.cs" />
@@ -136,9 +140,7 @@
     <None Include="log.config" />
     <None Include="packages.config" />
   </ItemGroup>
-  <ItemGroup>
-    <Folder Include="Mechanics\" />
-  </ItemGroup>
+  <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
     <PostBuildEvent>$(ProjectDir)$(OutDir)Gmich.Cedrus.Weaving.exe</PostBuildEvent>
