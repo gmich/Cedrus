@@ -6,7 +6,9 @@ namespace Gmich.Cedrus
     {
         protected override void Load(ContainerBuilder builder)
         {
-            builder.RegisterType<TimeManager>().AsSelf();
+            builder.RegisterType<GameTimeline>()
+                .AsSelf()
+                .SingleInstance();
         }
     }
 }

@@ -2,7 +2,7 @@
 
 namespace Gmich.Cedrus
 {
-    public class Timeline
+    public class Timeline : ITimeline
     {
         private readonly Func<double> timeProvider;
         private readonly Func<double> total;
@@ -17,5 +17,7 @@ namespace Gmich.Cedrus
 
         public TimeSpan TotalTime => TimeSpan.FromSeconds(total());
     }
+
+
 }
 

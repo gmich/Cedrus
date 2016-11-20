@@ -1,15 +1,17 @@
 ﻿using Autofac;
 using Microsoft.Xna.Framework;
+using System;
 
 namespace Gmich.Cedrus
 {
     public class CedrusGame : Game
     {
-        private readonly TimeManager timeManager;
+        private readonly GameTimeline gameTimeline;
+
         public CedrusGame(ContainerBuilder builder)
         {
             var container = builder.Build();
-            var timeManager = container.Resolve<TimeManager>();
+            gameTimeline = container.Resolve<GameTimeline>();
         }
 
         protected override void Initialize()
@@ -26,7 +28,9 @@ namespace Gmich.Cedrus
 
         protected override void Update(GameTime gameTime)
         {
-            timeManager.TimeFactory = () => new Timeline(() => gameTime.ElapsedGameTime.TotalSeconds, () => gameTime.ElapsedGameTime.TotalMilliseconds);
+            gameTimeline.DeltaTime = gameTime.ElapsedGameTime;
+            gameTimeline.TotalTime = gameTime.TotalGameTime;
+
 
         }
 

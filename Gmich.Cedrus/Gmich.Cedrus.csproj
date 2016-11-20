@@ -88,11 +88,7 @@
     <Compile Include="Content\AContainer.cs" />
     <Compile Include="Content\AssetContainer.cs" />
     <Compile Include="Content\ContentContainer.cs" />
-    <Compile Include="Entities\CollisionPoint.cs" />
-    <Compile Include="Entities\CollisionBox.cs" />
     <Compile Include="Entities\DynamicEntity.cs" />
-    <Compile Include="Entities\ICollidable.cs" />
-    <Compile Include="Entities\LifetimeObject.cs" />
     <Compile Include="GameSettings.cs" />
     <Compile Include="Input\GamePadInput.cs" />
     <Compile Include="Input\IInput.cs" />
@@ -102,6 +98,9 @@
     <Compile Include="Input\KeyboardUtils.cs" />
     <Compile Include="Input\MouseInput.cs" />
     <Compile Include="Input\TouchInput.cs" />
+    <Compile Include="IOC\AutofacContainer.cs" />
+    <Compile Include="IOC\Container.cs" />
+    <Compile Include="IOC\IContainer.cs" />
     <Compile Include="Logging\IAppender.cs" />
     <Compile Include="Logging\InterceptorModule.cs" />
     <Compile Include="Logging\InvocationContext.cs" />
@@ -121,13 +120,22 @@
     <Compile Include="Rendering\LayerRenderer.cs" />
     <Compile Include="CendrusModule.cs" />
     <Compile Include="Rendering\RenderingUtilities.cs" />
+    <Compile Include="Rendering\RenderManager.cs" />
     <Compile Include="Rendering\ScreenRenderer.cs" />
     <Compile Include="Scene\ISceneHost.cs" />
     <Compile Include="Scene\SceneSettings.cs" />
+    <Compile Include="Timeline\GameTimeline.cs" />
+    <Compile Include="Timeline\ITimeline.cs" />
     <Compile Include="Timeline\TimeLine.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Timeline\TimeManager.cs" />
     <Compile Include="Timeline\TimeModule.cs" />
+    <Compile Include="World\Body.cs" />
+    <Compile Include="World\Fixture.cs" />
+    <Compile Include="World\Joint.cs" />
+    <Compile Include="World\Shape.cs" />
+    <Compile Include="World\Solver.cs" />
+    <Compile Include="World\World.cs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Gmich.Cedrus.Weaving\Gmich.Cedrus.Weaving.csproj">

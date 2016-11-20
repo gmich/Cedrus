@@ -4,12 +4,9 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Gmich.Cedrus.Entities
+namespace Gmich.Cedrus.World
 {
-    public interface IGameLifetime
+    class Solver
     {
-        void Enter();
-        void Pause();
-        void Exit(); 
     }
 }
