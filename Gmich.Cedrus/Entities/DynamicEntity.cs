@@ -40,7 +40,7 @@ namespace Gmich.Cedrus.Entities
             Position += Velocity * (float)deltaTime;
         }
 
-        void HandleInput(Input.InputManager inputManager, Timeline time)
+        void HandleInput(Input.InputHandler inputManager, Timeline time)
         {
             InputConfiguration.Check(inputManager);
         }

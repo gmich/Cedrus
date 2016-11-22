@@ -15,7 +15,7 @@ namespace Gmich.Cedrus.Scene
         ContentContainer ContentContainer { get; }
 
         void Unload();
-        void HandleInput(InputManager inputManager, Timeline time);
+        void HandleInput(InputHandler inputManager, Timeline time);
         void FixedUpdate(Timeline time);
         void Render();
     }

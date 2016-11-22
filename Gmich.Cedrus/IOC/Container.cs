@@ -18,6 +18,11 @@ namespace Gmich.Cedrus.IOC
             return (TService)Resolve(typeof(TService));
         }
 
+        public object BegingLifetime()
+        {
+            throw new NotImplementedException();
+        }
+
         public object Resolve(Type serviceType)
         {
             Func<object> creator;

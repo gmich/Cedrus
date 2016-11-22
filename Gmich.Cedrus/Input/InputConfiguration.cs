@@ -5,16 +5,16 @@ namespace Gmich.Cedrus.Input
 {
     public class InputConfiguration
     {
-        private readonly List<Tuple<Predicate<InputManager>, Action>> config = new List<Tuple<Predicate<InputManager>, Action>>();
+        private readonly List<Tuple<Predicate<InputHandler>, Action>> config = new List<Tuple<Predicate<InputHandler>, Action>>();
 
-        public IDisposable Add(Predicate<InputManager> input, Action action)
+        public IDisposable Add(Predicate<InputHandler> input, Action action)
         {
             var tuple = Tuple.Create(input, action);
             config.Add(tuple);
             return Disposable.ForList(config, tuple);
         }        
 
-        public void Check(InputManager inputManager)
+        public void Check(InputHandler inputManager)
         {
             foreach(var entry in config)
             {

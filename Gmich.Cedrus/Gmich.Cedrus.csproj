@@ -80,11 +80,13 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Actors\Human.cs" />
     <Compile Include="Camera\Camera.cs" />
     <Compile Include="Camera\CameraExtensions.cs" />
     <Compile Include="Camera\ICamera.cs" />
     <Compile Include="Common\DisposableEntry.cs" />
     <Compile Include="CedrusGame.cs" />
+    <Compile Include="Common\SubscriberBase.cs" />
     <Compile Include="Content\AContainer.cs" />
     <Compile Include="Content\AssetContainer.cs" />
     <Compile Include="Content\ContentContainer.cs" />
@@ -93,13 +95,16 @@
     <Compile Include="Input\GamePadInput.cs" />
     <Compile Include="Input\IInput.cs" />
     <Compile Include="Input\InputConfiguration.cs" />
+    <Compile Include="Input\InputHandler.cs" />
     <Compile Include="Input\InputManager.cs" />
+    <Compile Include="Input\InputReactiveComponent.cs" />
     <Compile Include="Input\KeyboardInput.cs" />
     <Compile Include="Input\KeyboardUtils.cs" />
     <Compile Include="Input\MouseInput.cs" />
     <Compile Include="Input\TouchInput.cs" />
     <Compile Include="IOC\AutofacContainer.cs" />
     <Compile Include="IOC\Container.cs" />
+    <Compile Include="IOC\CleanedUpEntity.cs" />
     <Compile Include="IOC\IContainer.cs" />
     <Compile Include="Logging\IAppender.cs" />
     <Compile Include="Logging\InterceptorModule.cs" />
@@ -123,7 +128,10 @@
     <Compile Include="Rendering\RenderManager.cs" />
     <Compile Include="Rendering\ScreenRenderer.cs" />
     <Compile Include="Scene\ISceneHost.cs" />
+    <Compile Include="World\PhysicsUpdateManager.cs" />
     <Compile Include="Scene\SceneSettings.cs" />
+    <Compile Include="Scene\UpdatedEntity.cs" />
+    <Compile Include="Scene\LogicUpdateManager.cs" />
     <Compile Include="Timeline\GameTimeline.cs" />
     <Compile Include="Timeline\ITimeline.cs" />
     <Compile Include="Timeline\TimeLine.cs" />
