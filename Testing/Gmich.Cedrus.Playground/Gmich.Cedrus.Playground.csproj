@@ -63,7 +63,7 @@
     <MonoGameContentReference Include="Content\Content.mgcb" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\Gmich.Cedrus\Gmich.Cedrus.csproj">
+    <ProjectReference Include="..\..\Gmich.Cedrus\Gmich.Cedrus.csproj">
       <Project>{f3fb29b2-201b-4697-b366-bd5fa6633b84}</Project>
       <Name>Gmich.Cedrus</Name>
     </ProjectReference>
