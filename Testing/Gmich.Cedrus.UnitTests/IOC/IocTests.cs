@@ -14,11 +14,11 @@ namespace Gmich.Cedrus.UnitTests.IOC
 
         public class A : IA { }
         public class B : IB { }
-        public class C : IC { public C(IA a, IB b, IC c) { } }
+        public class C : IC { public C(IA a, IB b) { } }
 
         [TestMethod]
         [TestCategory(Category.IOC)]
-        public void SimpleRegisterResovle()
+        public void SimpleResolve()
         {
             var builder = new IocBuilder();
 
@@ -28,6 +28,87 @@ namespace Gmich.Cedrus.UnitTests.IOC
 
             var a = container.Resolve<IA>();
 
+        }
+
+        [TestMethod]
+        [TestCategory(Category.IOC)]
+        public void AdvancedResolve()
+        {
+            var builder = new IocBuilder();
+
+            builder.Register<IA, A>();
+            builder.Register<IB, B>();
+            builder.Register<IC, C>();
+            var container = builder.Build();
+
+            var a = container.Resolve<IC>();
+
+        }
+
+        [TestMethod]
+        [TestCategory(Category.IOC)]
+        public void ResolveSelfRegistered()
+        {
+            var builder = new IocBuilder();
+
+            builder.Register<A, A>();
+            var container = builder.Build();
+
+            var a = container.Resolve<A>();
+        }
+
+        [TestMethod]
+        [TestCategory(Category.IOC)]
+        public void ResolveLambda()
+        {
+            var builder = new IocBuilder();
+
+            builder.Register<IA, A>();
+            builder.Register<IB, B>();
+            builder.Register<IC, C>(c => new C(c.Resolve<IA>(), c.Resolve<IB>()));
+            var container = builder.Build();
+
+            var ic = container.Resolve<IC>();
+        }
+
+        [TestMethod]
+        [TestCategory(Category.IOC)]
+        public void ResolveSingleton()
+        {
+            var builder = new IocBuilder();
+
+            builder.RegisterSingleton<IA, A>();
+            var container = builder.Build();
+
+            var a1 = container.Resolve<IA>();
+            var a2 = container.Resolve<IA>();
+
+            Assert.AreEqual(a1, a2);
+        }
+
+        [TestMethod]
+        [TestCategory(Category.IOC)]
+        public void ResolveSingletonLambda()
+        {
+            var builder = new IocBuilder();
+
+            builder.RegisterSingleton<IA, A>(c => new A());
+            var container = builder.Build();
+
+            var a1 = container.Resolve<IA>();
+            var a2 = container.Resolve<IA>();
+
+            Assert.AreEqual(a1, a2);
+        }
+
+        [TestMethod]
+        [ExpectedException(typeof(CendrusIocException))]
+        public void DoubleRegistrationThrowsException()
+        {
+            var builder = new IocBuilder();
+
+            builder.Register<A, A>();
+            builder.Register<A, A>();
         }
     }
 }

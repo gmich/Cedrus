@@ -5,6 +5,13 @@ using System.Linq;
 namespace Gmich.Cedrus.IOC
 {
 
+    public class CendrusIocException : Exception
+    {
+        public CendrusIocException(string message) : base(message)
+        {
+        }
+    }
+
     public class IocContainer : IContainer
     {
         private readonly Dictionary<Type, Func<object>> registrations = new Dictionary<Type, Func<object>>();
@@ -25,7 +32,7 @@ namespace Gmich.Cedrus.IOC
             {
                 return registrations[serviceType]();
             }
-            throw new InvalidOperationException("No registration for " + serviceType);
+            throw new CendrusIocException("No registration for " + serviceType);
         }
 
         public object BeginLifetime()
@@ -65,31 +72,41 @@ namespace Gmich.Cedrus.IOC
         public void Register<TService, TImpl>()
             where TImpl : TService
         {
-            registrations.Add(typeof(TService), new RegistrationItem(RegistrationItem.Tag.Default, () => Resolve(typeof(TImpl))));
+            AddRegistration<TService, TImpl>(RegistrationItem.Tag.Default, CreateInstance(typeof(TImpl)));
         }
 
         public void Register<TService, TImpl>(Func<IContainer, TImpl> resolver)
         {
-            registrations.Add(typeof(TService), new RegistrationItem(RegistrationItem.Tag.Lambda, () => resolver(container.ActiveContainer)));
+            AddRegistration<TService, TImpl>(RegistrationItem.Tag.Lambda, () => resolver(container.ActiveContainer));
         }
 
         public void RegisterSingleton<TService, TImpl>()
             where TImpl : TService
         {
-            registrations.Add(typeof(TService), new RegistrationItem(RegistrationItem.Tag.Singleton, () => Resolve(typeof(TImpl))));
+            AddRegistration<TService, TImpl>(RegistrationItem.Tag.Singleton, CreateInstance(typeof(TImpl)));
         }
 
         public void RegisterSingleton<TService, TImpl>(Func<IContainer, TImpl> instanceCreator)
             where TImpl : TService
         {
-            registrations.Add(typeof(TService), new RegistrationItem(RegistrationItem.Tag.Singleton, () => instanceCreator(container.ActiveContainer)));
+            AddRegistration<TService, TImpl>(RegistrationItem.Tag.Singleton, () => instanceCreator(container.ActiveContainer));
+        }
+
+        private void AddRegistration<TService, TImpl>(RegistrationItem.Tag tag, Func<object> lambda)
+        {
+            var type = typeof(TService);
+            if (registrations.ContainsKey(type))
+            {
+                throw new CendrusIocException($"${type.FullName} is already registered");
+            }
+            registrations.Add(type, new RegistrationItem(tag, lambda));
         }
 
         private Func<object> Resolve(Type serviceType)
         {
             if (registrations.ContainsKey(serviceType))
             {
-                return () => registrations[serviceType];
+                return () => registrations[serviceType].Lambda;
             }
             if (!serviceType.IsAbstract)
             {
@@ -105,11 +122,18 @@ namespace Gmich.Cedrus.IOC
 
             if (parameterTypes.Length == 0)
             {
-                return () => Activator.CreateInstance(implementationType);
+                return () =>
+                    Activator.CreateInstance(implementationType);
             }
 
-            var dependencies = parameterTypes.Select(t => Resolve(t)).ToArray();
-            return () => Activator.CreateInstance(implementationType, dependencies.Select(d => d.Invoke()));
+            var dependencies = parameterTypes
+                .Select(t => Resolve(t))
+                .Select(c => c.Invoke())
+                .Cast<Func<object>>()
+                .ToArray();
+
+            return () =>
+                Activator.CreateInstance(implementationType, dependencies.Select(d => d.Invoke()).ToArray());
         }
 
         public IContainer Build()
@@ -121,8 +145,6 @@ namespace Gmich.Cedrus.IOC
                 switch (registration.Value.RegistrationTag)
                 {
                     case RegistrationItem.Tag.Default:
-                        containerRegistrations.Add(registration.Key, (Func<object>)registration.Value.Lambda());
-                        break;
                     case RegistrationItem.Tag.Lambda:
                         containerRegistrations.Add(registration.Key, registration.Value.Lambda);
                         break;
