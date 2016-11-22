@@ -7,14 +7,16 @@ namespace Gmich.Cedrus.UnitTests.IOC
     [TestClass]
     public class IocTests
     {
-
         public interface IA { }
         public interface IB { }
         public interface IC { }
+        public interface ID { }
 
         public class A : IA { }
         public class B : IB { }
         public class C : IC { public C(IA a, IB b) { } }
+
+        public class D : ID { public D(IA a, IB b, IC c) { } }
 
         [TestMethod]
         [TestCategory(Category.IOC)]
@@ -42,7 +44,34 @@ namespace Gmich.Cedrus.UnitTests.IOC
             var container = builder.Build();
 
             var a = container.Resolve<IC>();
+        }
 
+        [TestMethod]
+        [TestCategory(Category.IOC)]
+        public void DeepObjectGraphResolve()
+        {
+            var builder = new IocBuilder();
+
+            builder.Register<IA, A>();
+            builder.Register<IB, B>();
+            builder.Register<IC, C>();
+            builder.Register<ID, D>();
+            var container = builder.Build();
+
+            var d = container.Resolve<ID>();
+        }
+
+        [TestMethod]
+        [TestCategory(Category.IOC)]
+        [ExpectedException(typeof(CendrusIocException))]
+        public void MissingRegistrationThrowsExceptionOnContainerBuild()
+        {
+            var builder = new IocBuilder();
+
+            builder.Register<IA, A>();
+            builder.Register<IC, C>();
+            builder.Register<ID, D>();
+            var container = builder.Build();
         }
 
         [TestMethod]
@@ -102,6 +131,7 @@ namespace Gmich.Cedrus.UnitTests.IOC
         }
 
         [TestMethod]
+        [TestCategory(Category.IOC)]
         [ExpectedException(typeof(CendrusIocException))]
         public void DoubleRegistrationThrowsException()
         {

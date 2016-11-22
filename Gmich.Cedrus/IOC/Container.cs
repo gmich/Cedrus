@@ -112,7 +112,7 @@ namespace Gmich.Cedrus.IOC
             {
                 return CreateInstance(serviceType);
             }
-            throw new InvalidOperationException($"Can't resolve abstract type {serviceType}");
+            throw new CendrusIocException($"Unable to resolve abstract type {serviceType}. Component is not registered");
         }
 
         private Func<object> CreateInstance(Type implementationType)
