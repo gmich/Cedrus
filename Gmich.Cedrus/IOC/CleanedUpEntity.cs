@@ -4,7 +4,6 @@ namespace Gmich.Cedrus.IOC
 {
     public abstract class CleanedupEntity : IDisposable
     {
-        private readonly Action disposal;
         private bool isDisposed = false;
 
         public void Dispose()
@@ -19,7 +18,7 @@ namespace Gmich.Cedrus.IOC
         {
             if (disposing && !isDisposed)
             {
-                disposal();
+                OnDisposal();
                 isDisposed = true;
             }
         }

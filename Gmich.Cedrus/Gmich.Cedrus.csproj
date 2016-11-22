@@ -102,7 +102,9 @@
     <Compile Include="Input\KeyboardUtils.cs" />
     <Compile Include="Input\MouseInput.cs" />
     <Compile Include="Input\TouchInput.cs" />
-    <Compile Include="IOC\Container.cs" />
+    <Compile Include="IOC\CendrusIocException.cs" />
+    <Compile Include="IOC\IocBuilder.cs" />
+    <Compile Include="IOC\IocContainer.cs" />
     <Compile Include="IOC\CleanedUpEntity.cs" />
     <Compile Include="IOC\IContainer.cs" />
     <Compile Include="Logging\IAppender.cs" />
