@@ -12,6 +12,8 @@ namespace Gmich.Cedrus.IOC
         private class RegistrationItem
         {
             public Func<object> Lambda { get; }
+
+            public Func<object> Resolved { get; internal set; }
             public Tag RegistrationTag { get; }
 
             public RegistrationItem(Tag tag, Func<object> lambda)
@@ -20,19 +22,18 @@ namespace Gmich.Cedrus.IOC
                 RegistrationTag = tag;
             }
 
-            [Flags]
             public enum Tag
             {
-                Default = 1,
-                Lambda = 2,
-                Singleton = 4,
+                Default,
+                Lambda,
+                Singleton,
             }
         }
 
         public IocBuilder Register<TService, TImpl>()
             where TImpl : TService
         {
-            return AddRegistration<TService>(RegistrationItem.Tag.Default, CreateInstance(typeof(TImpl)));
+            return AddRegistration<TService>(RegistrationItem.Tag.Default, () => CreateInstance(typeof(TImpl)));
         }
 
         public IocBuilder Register<TService>(Func<IContainer, TService> resolver)
@@ -43,14 +44,14 @@ namespace Gmich.Cedrus.IOC
         public IocBuilder RegisterSingleton<TService, TImpl>()
             where TImpl : TService
         {
-            var lazy = new Lazy<object>(CreateInstance(typeof(TImpl)));
+            var lazy = new Lazy<object>(() => CreateInstance(typeof(TImpl)));
             return AddRegistration<TService>(RegistrationItem.Tag.Singleton, () => lazy.Value);
         }
 
         public IocBuilder RegisterSingleton<TService>(Func<IContainer, TService> instanceCreator)
         {
             var lazy = new Lazy<object>(() => instanceCreator(container));
-            return AddRegistration<TService>(RegistrationItem.Tag.Singleton, () => lazy.Value);
+            return AddRegistration<TService>(RegistrationItem.Tag.Lambda, () => lazy.Value);
         }
 
         private IocBuilder AddRegistration<TService>(RegistrationItem.Tag tag, Func<object> lambda)
@@ -68,11 +69,7 @@ namespace Gmich.Cedrus.IOC
         {
             if (registrations.ContainsKey(serviceType))
             {
-                if (registrations[serviceType].RegistrationTag == RegistrationItem.Tag.Singleton)
-                {
-                    return () => registrations[serviceType].Lambda;
-                }
-                return () => registrations[serviceType].Lambda;
+                return NormalizeLambda(registrations[serviceType]);
             }
             if (!serviceType.IsAbstract)
             {
@@ -102,9 +99,55 @@ namespace Gmich.Cedrus.IOC
                 Activator.CreateInstance(implementationType, dependencies.Select(d => d.Invoke()).ToArray());
         }
 
+        private Func<object> NormalizeLambda(RegistrationItem item)
+        {
+            if (item.Resolved != null)
+            {
+                return item.Resolved;
+            }
+            switch (item.RegistrationTag)
+            {
+                case RegistrationItem.Tag.Default:
+                    return () => item.Lambda();
+                case RegistrationItem.Tag.Singleton:
+                    var resolve = (Func<object>)item.Lambda();
+                    var lazy = new Lazy<object>(resolve);
+                    item.Resolved = () => new Func<object>(() => lazy.Value);
+                    return item.Resolved;
+                default:
+                    return () => item.Lambda;
+            }
+        }
+
         public IContainer Build()
         {
-            container = new IocContainer(registrations.ToDictionary(item => item.Key, item => item.Value.Lambda));
+            var containerRegistrations = new Dictionary<Type, Func<object>>();
+
+            foreach (var registration in registrations)
+            {
+                switch (registration.Value.RegistrationTag)
+                {
+                    case RegistrationItem.Tag.Default:
+                        containerRegistrations.Add(registration.Key, (Func<object>)registration.Value.Lambda());
+                        break;
+                    case RegistrationItem.Tag.Lambda:
+                        containerRegistrations.Add(registration.Key, registration.Value.Lambda);
+                        break;
+                    case RegistrationItem.Tag.Singleton:
+                        if (registration.Value.Resolved == null)
+                        {
+                            var resolve = registration.Value.Lambda();
+                            Lazy<object> lazy = new Lazy<object>((Func<object>)resolve);
+                            containerRegistrations.Add(registration.Key, () => lazy.Value);
+                        }
+                        else
+                        {
+                            containerRegistrations.Add(registration.Key, (Func<object>)registration.Value.Resolved());
+                        }
+                        break;
+                }
+            }
+            container = new IocContainer(containerRegistrations);
             return container;
         }
     }

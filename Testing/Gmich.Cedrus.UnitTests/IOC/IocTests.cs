@@ -64,7 +64,24 @@ namespace Gmich.Cedrus.UnitTests.IOC
             var builder = new IocBuilder();
 
             builder.Register<IA, A>();
+            builder.Register<IC, C>();
             builder.RegisterSingleton<IB, B>();
+            var container = builder.Build();
+
+            var a = container.Resolve<IC>();
+            var b = container.Resolve<IC>();
+
+            Assert.AreEqual(a.B, b.B);
+        }
+
+        [TestMethod]
+        [TestCategory(Category.IOC)]
+        public void AdvancedResolveWithSingletonLambda()
+        {
+            var builder = new IocBuilder();
+
+            builder.Register<IA, A>();
+            builder.RegisterSingleton<IB>(c => new B());
             builder.Register<IC, C>();
             var container = builder.Build();
 
@@ -87,6 +104,39 @@ namespace Gmich.Cedrus.UnitTests.IOC
             var container = builder.Build();
 
             var d = container.Resolve<ID>();
+        }
+
+        [TestMethod]
+        [TestCategory(Category.IOC)]
+        public void DeepObjectGraphWithWrongOrderResolve()
+        {
+            var builder = new IocBuilder();
+
+            builder.Register<ID, D>();
+            builder.Register<IA, A>();
+            builder.Register<IC, C>();
+            builder.Register<IB, B>();
+            var container = builder.Build();
+
+            var d = container.Resolve<ID>();
+        }
+
+        [TestMethod]
+        [TestCategory(Category.IOC)]
+        public void DeepObjectGraphWithWrongOrderAndSingletonResolve()
+        {
+            var builder = new IocBuilder();
+
+            builder.RegisterSingleton<ID, D>();
+            builder.Register<IA, A>();
+            builder.Register<IC, C>();
+            builder.Register<IB, B>();
+            var container = builder.Build();
+
+            var d1 = container.Resolve<ID>();
+            var d2 = container.Resolve<ID>();
+
+            Assert.AreEqual(d1, d2);
         }
 
         [TestMethod]
@@ -121,8 +171,8 @@ namespace Gmich.Cedrus.UnitTests.IOC
             var builder = new IocBuilder();
 
             builder.Register<IA, A>();
-            builder.Register<IB, B>();
             builder.Register<IC>(c => new C(c.Resolve<IA>(), c.Resolve<IB>()));
+            builder.Register<IB, B>();
             var container = builder.Build();
 
             var ic = container.Resolve<IC>();
