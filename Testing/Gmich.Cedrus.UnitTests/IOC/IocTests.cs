@@ -239,7 +239,7 @@ namespace Gmich.Cedrus.UnitTests.IOC
 
         [TestMethod]
         [TestCategory(Category.IOC)]
-        public void DoubleRegistrationqThrowsException()
+        public void ScopeDisposesResolvedComponents()
         {
             var builder = new IocBuilder();
 
