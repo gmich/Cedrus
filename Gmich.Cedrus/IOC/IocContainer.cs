@@ -1,14 +1,26 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace Gmich.Cedrus.IOC
 {
     public class IocContainer : CleanedupEntity, IContainer
     {
-        private readonly Dictionary<Type, Func<object>> registrations = new Dictionary<Type, Func<object>>();
-        private readonly List<object> resolved = new List<object>();
+        protected readonly Dictionary<Type, List<object>> resolved = new Dictionary<Type, List<object>>();
+        protected readonly Dictionary<Type, Entry> registrations;
 
-        public IocContainer(Dictionary<Type, Func<object>> registrations)
+        public class Entry
+        {
+            internal Entry(RegistrationTag tag, Func<object> resolve)
+            {
+                Tag = tag;
+                Resolve = resolve;
+            }
+            internal RegistrationTag Tag { get; }
+            public Func<object> Resolve { get; }
+
+        }
+        public IocContainer(Dictionary<Type, Entry> registrations)
         {
             this.registrations = registrations;
         }
@@ -22,24 +34,60 @@ namespace Gmich.Cedrus.IOC
         {
             if (registrations.ContainsKey(serviceType))
             {
-                var obj = registrations[serviceType]();
-                resolved.Add(obj);
+                var obj = InternalResolve(serviceType);
+                AddResolved(serviceType, obj);
                 return obj;
             }
             throw new CendrusIocException($"No registration for {serviceType.FullName}");
         }
 
-        public IContainer Scope => new IocContainer(registrations);
+        private void AddResolved(Type serviceType, object obj)
+        {
+            if (resolved.ContainsKey(serviceType))
+            {
+                resolved[serviceType].Add(obj);
+            }
+            else
+            {
+                resolved[serviceType] = new List<object>();
+                resolved[serviceType].Add(obj);
+            }
+        }
+
+        protected virtual object InternalResolve(Type serviceType) => registrations[serviceType].Resolve();
+
+        public IContainer Scope => new IocScope(registrations);
 
         protected override void OnDisposal()
         {
-            foreach (var obj in resolved)
+            foreach (var obj in resolved.SelectMany(c => c.Value))
             {
-                (resolved as IDisposable)?.Dispose();
+                (obj as IDisposable)?.Dispose();
             }
             resolved.Clear();
         }
 
+        private class IocScope : IocContainer
+        {
+            public IocScope(Dictionary<Type, Entry> registrations) : base(registrations)
+            {
+            }
+
+            protected override object InternalResolve(Type serviceType)
+            {
+                if (registrations[serviceType].Tag.HasFlag(RegistrationTag.Scope))
+                {
+                    if (resolved.ContainsKey(serviceType))
+                    {
+                        return resolved[serviceType].Single();
+                    }
+                }
+                return base.InternalResolve(serviceType);
+            }
+        }
+
+
     }
+
 
 }

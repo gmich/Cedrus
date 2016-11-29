@@ -4,6 +4,16 @@ using System.Linq;
 
 namespace Gmich.Cedrus.IOC
 {
+
+    [Flags]
+    internal enum RegistrationTag
+    {
+        Default = 1,
+        Lambda = 2,
+        Singleton = 4,
+        Scope = 8
+    }
+
     public class IocBuilder
     {
         private readonly Dictionary<Type, RegistrationItem> registrations = new Dictionary<Type, RegistrationItem>();
@@ -14,47 +24,51 @@ namespace Gmich.Cedrus.IOC
             public Func<object> Lambda { get; }
 
             public Func<object> Resolved { get; internal set; }
-            public Tag RegistrationTag { get; }
+            public RegistrationTag RegistrationTag { get; }
 
-            public RegistrationItem(Tag tag, Func<object> lambda)
+            public RegistrationItem(RegistrationTag tag, Func<object> lambda)
             {
                 Lambda = lambda;
                 RegistrationTag = tag;
-            }
-
-            public enum Tag
-            {
-                Default,
-                Lambda,
-                Singleton,
             }
         }
 
         public IocBuilder Register<TService, TImpl>()
             where TImpl : TService
         {
-            return AddRegistration<TService>(RegistrationItem.Tag.Default, () => CreateInstance(typeof(TImpl)));
+            return AddRegistration<TService>(RegistrationTag.Default, () => CreateInstance(typeof(TImpl)));
         }
 
         public IocBuilder Register<TService>(Func<IContainer, TService> resolver)
         {
-            return AddRegistration<TService>(RegistrationItem.Tag.Lambda, () => resolver(container));
+            return AddRegistration<TService>(RegistrationTag.Lambda, () => resolver(container));
+        }
+
+        public IocBuilder RegisterPerScope<TService, TImpl>()
+            where TImpl : TService
+        {
+            return AddRegistration<TService>(RegistrationTag.Scope | RegistrationTag.Default, () => CreateInstance(typeof(TImpl)));
+        }
+
+        public IocBuilder RegisterPerScope<TService>(Func<IContainer, TService> resolver)
+        {
+            return AddRegistration<TService>(RegistrationTag.Scope | RegistrationTag.Lambda, () => resolver(container));
         }
 
         public IocBuilder RegisterSingleton<TService, TImpl>()
             where TImpl : TService
         {
             var lazy = new Lazy<object>(() => CreateInstance(typeof(TImpl)));
-            return AddRegistration<TService>(RegistrationItem.Tag.Singleton, () => lazy.Value);
+            return AddRegistration<TService>(RegistrationTag.Singleton, () => lazy.Value);
         }
 
         public IocBuilder RegisterSingleton<TService>(Func<IContainer, TService> instanceCreator)
         {
             var lazy = new Lazy<object>(() => instanceCreator(container));
-            return AddRegistration<TService>(RegistrationItem.Tag.Lambda, () => lazy.Value);
+            return AddRegistration<TService>(RegistrationTag.Lambda, () => lazy.Value);
         }
 
-        private IocBuilder AddRegistration<TService>(RegistrationItem.Tag tag, Func<object> lambda)
+        private IocBuilder AddRegistration<TService>(RegistrationTag tag, Func<object> lambda)
         {
             var type = typeof(TService);
             if (registrations.ContainsKey(type))
@@ -69,7 +83,7 @@ namespace Gmich.Cedrus.IOC
         {
             if (registrations.ContainsKey(serviceType))
             {
-                return NormalizeLambda(registrations[serviceType]);
+                return GetNormalizedLambda(registrations[serviceType]);
             }
             if (!serviceType.IsAbstract)
             {
@@ -91,63 +105,47 @@ namespace Gmich.Cedrus.IOC
 
             var dependencies = parameterTypes
                 .Select(t => Resolve(t))
-                .Select(c => c.Invoke())
-                .Cast<Func<object>>()
                 .ToArray();
 
             return () =>
                 Activator.CreateInstance(implementationType, dependencies.Select(d => d.Invoke()).ToArray());
         }
 
-        private Func<object> NormalizeLambda(RegistrationItem item)
+        private Func<object> GetNormalizedLambda(RegistrationItem item)
         {
-            if (item.Resolved != null)
+            if (item.Resolved == null)
             {
-                return item.Resolved;
+                item.Resolved = Normalize(item);
             }
-            switch (item.RegistrationTag)
+            return item.Resolved;
+        }
+
+        private Func<object> Normalize(RegistrationItem item)
+        {
+            if (item.RegistrationTag.HasFlag(RegistrationTag.Default))
             {
-                case RegistrationItem.Tag.Default:
-                    return () => item.Lambda();
-                case RegistrationItem.Tag.Singleton:
-                    var resolve = (Func<object>)item.Lambda();
-                    var lazy = new Lazy<object>(resolve);
-                    item.Resolved = () => new Func<object>(() => lazy.Value);
-                    return item.Resolved;
-                default:
-                    return () => item.Lambda;
+                return (Func<object>)item.Lambda();
+            }
+            else if (item.RegistrationTag.HasFlag(RegistrationTag.Lambda))
+            {
+                return item.Lambda;
+            }
+            else if (item.RegistrationTag.HasFlag(RegistrationTag.Singleton))
+            {
+                var resolve = (Func<object>)item.Lambda();
+                var lazy = new Lazy<object>(resolve);
+                return new Func<object>(() => lazy.Value);
+            }
+            else
+            {
+                return () => item.Lambda();
             }
         }
 
         public IContainer Build()
         {
-            var containerRegistrations = new Dictionary<Type, Func<object>>();
-
-            foreach (var registration in registrations)
-            {
-                switch (registration.Value.RegistrationTag)
-                {
-                    case RegistrationItem.Tag.Default:
-                        containerRegistrations.Add(registration.Key, (Func<object>)registration.Value.Lambda());
-                        break;
-                    case RegistrationItem.Tag.Lambda:
-                        containerRegistrations.Add(registration.Key, registration.Value.Lambda);
-                        break;
-                    case RegistrationItem.Tag.Singleton:
-                        if (registration.Value.Resolved == null)
-                        {
-                            var resolve = registration.Value.Lambda();
-                            Lazy<object> lazy = new Lazy<object>((Func<object>)resolve);
-                            containerRegistrations.Add(registration.Key, () => lazy.Value);
-                        }
-                        else
-                        {
-                            containerRegistrations.Add(registration.Key, (Func<object>)registration.Value.Resolved());
-                        }
-                        break;
-                }
-            }
-            container = new IocContainer(containerRegistrations);
+            container = new IocContainer(registrations
+                .ToDictionary(c => c.Key, c => new IocContainer.Entry(c.Value.RegistrationTag, GetNormalizedLambda(c.Value))));
             return container;
         }
     }

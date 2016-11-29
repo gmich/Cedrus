@@ -26,7 +26,14 @@ namespace Gmich.Cedrus.UnitTests.IOC
         }
 
         public class D : ID { public D(IA a, IB b, IC c) { } }
-        public class E : IE { public void Dispose() { } }
+        public class E : IE
+        {
+            public bool IsDisposed { get; private set; }
+            public void Dispose()
+            {
+                IsDisposed = true;
+            }
+        }
 
 
         [TestMethod]
@@ -40,7 +47,9 @@ namespace Gmich.Cedrus.UnitTests.IOC
             var container = builder.Build();
 
             var a = container.Resolve<IA>();
+            var b = container.Resolve<IA>();
 
+            Assert.AreNotEqual(a, b);
         }
 
         [TestMethod]
@@ -55,6 +64,9 @@ namespace Gmich.Cedrus.UnitTests.IOC
             var container = builder.Build();
 
             var a = container.Resolve<IC>();
+            var b = container.Resolve<IC>();
+
+            Assert.AreNotEqual(a, b);
         }
 
         [TestMethod]
@@ -71,6 +83,7 @@ namespace Gmich.Cedrus.UnitTests.IOC
             var a = container.Resolve<IC>();
             var b = container.Resolve<IC>();
 
+            Assert.AreNotEqual(a, b);
             Assert.AreEqual(a.B, b.B);
         }
 
@@ -104,6 +117,9 @@ namespace Gmich.Cedrus.UnitTests.IOC
             var container = builder.Build();
 
             var d = container.Resolve<ID>();
+            var e = container.Resolve<ID>();
+
+            Assert.AreNotEqual(d, e);
         }
 
         [TestMethod]
@@ -119,6 +135,9 @@ namespace Gmich.Cedrus.UnitTests.IOC
             var container = builder.Build();
 
             var d = container.Resolve<ID>();
+            var e = container.Resolve<ID>();
+
+            Assert.AreNotEqual(d, e);
         }
 
         [TestMethod]
@@ -162,6 +181,9 @@ namespace Gmich.Cedrus.UnitTests.IOC
             var container = builder.Build();
 
             var a = container.Resolve<A>();
+            var b = container.Resolve<A>();
+
+            Assert.AreNotEqual(a, b);
         }
 
         [TestMethod]
@@ -176,6 +198,9 @@ namespace Gmich.Cedrus.UnitTests.IOC
             var container = builder.Build();
 
             var ic = container.Resolve<IC>();
+            var id = container.Resolve<IC>();
+
+            Assert.AreNotEqual(ic, id);
         }
 
 
@@ -237,21 +262,84 @@ namespace Gmich.Cedrus.UnitTests.IOC
             builder.Register<A, A>();
         }
 
+
         [TestMethod]
         [TestCategory(Category.IOC)]
         public void ScopeDisposesResolvedComponents()
         {
             var builder = new IocBuilder();
 
-            var mockE = new Mock<IE>();
-            builder.Register<IE>(c => mockE.Object);
+            builder.Register<E, E>();
 
             var container = builder.Build();
 
+            E a = null;
             using (var scope = container.Scope)
             {
-                var e = scope.Resolve<IE>();
+                a = scope.Resolve<E>();
+                Assert.IsFalse(a.IsDisposed);
             }
+            Assert.IsTrue(a.IsDisposed);
+        }
+
+
+        [TestMethod]
+        [TestCategory(Category.IOC)]
+        public void ScopeResolvesAndDisposesCorrectly()
+        {
+            var container = new IocBuilder()
+            .Register<IA, A>()
+            .RegisterPerScope<IB, B>()
+            .Build();
+
+            IA a1 = null;
+            IA a2 = null;
+            IB b1 = null;
+            IB b2 = null;
+            using (var scope = container.Scope)
+            {
+                a1 = scope.Resolve<IA>();
+                a2 = scope.Resolve<IA>();
+                b1 = scope.Resolve<IB>();
+                b2 = scope.Resolve<IB>();
+            }
+            Assert.AreNotEqual(a1, a2);
+            Assert.AreEqual(b1, b2);
+
+            b1 = container.Resolve<IB>();
+            b2 = container.Resolve<IB>();
+
+            Assert.AreNotEqual(b1, b2);
+        }
+
+        [TestMethod]
+        [TestCategory(Category.IOC)]
+        public void ScopeResolvesAndDisposesLambdaCorrectly()
+        {
+            var container = new IocBuilder()
+            .Register<IA, A>()
+            .RegisterPerScope<IB>(c => new B())
+            .Build();
+
+            IA a1 = null;
+            IA a2 = null;
+            IB b1 = null;
+            IB b2 = null;
+            using (var scope = container.Scope)
+            {
+                a1 = scope.Resolve<IA>();
+                a2 = scope.Resolve<IA>();
+                b1 = scope.Resolve<IB>();
+                b2 = scope.Resolve<IB>();
+            }
+
+            Assert.AreNotEqual(a1, a2);
+            Assert.AreEqual(b1, b2);
+
+            b1 = container.Resolve<IB>();
+            b2 = container.Resolve<IB>();
+
+            Assert.AreNotEqual(b1, b2);
         }
     }
 }
