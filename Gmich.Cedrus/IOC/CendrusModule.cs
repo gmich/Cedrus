@@ -1,4 +1,6 @@
-﻿namespace Gmich.Cedrus.IOC
+﻿using Gmich.Cedrus.IOC;
+
+namespace Gmich.Cedrus
 {
     public abstract class CendrusModule
     {

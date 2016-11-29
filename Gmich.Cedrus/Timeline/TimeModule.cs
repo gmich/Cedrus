@@ -1,14 +1,13 @@
-﻿using Autofac;
+﻿using Gmich.Cedrus.IOC;
 
 namespace Gmich.Cedrus
 {
-    internal class TimeModule : Autofac.Module
+    internal class TimeModule : CendrusModule
     {
-        protected override void Load(ContainerBuilder builder)
+        public override void Register(IocBuilder builder)
         {
-            builder.RegisterType<GameTimeline>()
-                .AsSelf()
-                .SingleInstance();
+            builder.Register<GameTimeline, GameTimeline>();
         }
+
     }
 }

@@ -60,44 +60,44 @@ namespace Gmich.Cedrus.IOC
             return this;
         }
 
-        public IocBuilder Register<TService, TImpl>()
-            where TImpl : TService
+        public IocBuilder Register<TAbstract, TImpl>()
+            where TImpl : TAbstract
         {
-            return AddRegistration<TService>(RegistrationTag.Default, () => CreateInstance(typeof(TImpl)));
+            return AddRegistration<TAbstract>(RegistrationTag.Default, () => CreateInstance(typeof(TImpl)));
         }
 
-        public IocBuilder Register<TService>(Func<IContainer, TService> resolver)
+        public IocBuilder Register<TAbstract>(Func<IContainer, TAbstract> resolver)
         {
-            return AddRegistration<TService>(RegistrationTag.Lambda, () => resolver(container));
+            return AddRegistration<TAbstract>(RegistrationTag.Lambda, () => resolver(container));
         }
 
-        public IocBuilder RegisterPerScope<TService, TImpl>()
-            where TImpl : TService
+        public IocBuilder RegisterPerScope<TAbstract, TImpl>()
+            where TImpl : TAbstract
         {
-            return AddRegistration<TService>(RegistrationTag.Scope | RegistrationTag.Default, () => CreateInstance(typeof(TImpl)));
+            return AddRegistration<TAbstract>(RegistrationTag.Scope | RegistrationTag.Default, () => CreateInstance(typeof(TImpl)));
         }
 
-        public IocBuilder RegisterPerScope<TService>(Func<IContainer, TService> resolver)
+        public IocBuilder RegisterPerScope<TAbstract>(Func<IContainer, TAbstract> resolver)
         {
-            return AddRegistration<TService>(RegistrationTag.Scope | RegistrationTag.Lambda, () => resolver(container));
+            return AddRegistration<TAbstract>(RegistrationTag.Scope | RegistrationTag.Lambda, () => resolver(container));
         }
 
-        public IocBuilder RegisterSingleton<TService, TImpl>()
-            where TImpl : TService
+        public IocBuilder RegisterSingleton<TAbstract, TImpl>()
+            where TImpl : TAbstract
         {
             var lazy = new Lazy<object>(() => CreateInstance(typeof(TImpl)));
-            return AddRegistration<TService>(RegistrationTag.Singleton, () => lazy.Value);
+            return AddRegistration<TAbstract>(RegistrationTag.Singleton, () => lazy.Value);
         }
 
-        public IocBuilder RegisterSingleton<TService>(Func<IContainer, TService> instanceCreator)
+        public IocBuilder RegisterSingleton<TAbstract>(Func<IContainer, TAbstract> instanceCreator)
         {
             var lazy = new Lazy<object>(() => instanceCreator(container));
-            return AddRegistration<TService>(RegistrationTag.Lambda, () => lazy.Value);
+            return AddRegistration<TAbstract>(RegistrationTag.Lambda, () => lazy.Value);
         }
 
-        private IocBuilder AddRegistration<TService>(RegistrationTag tag, Func<object> lambda)
+        private IocBuilder AddRegistration<TAbstract>(RegistrationTag tag, Func<object> lambda)
         {
-            var type = typeof(TService);
+            var type = typeof(TAbstract);
             if (registrations.ContainsKey(type))
             {
                 throw new CendrusIocException($"${type.FullName} is already registered");
