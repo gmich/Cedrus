@@ -1,10 +1,12 @@
 ﻿using Autofac;
 using Gmich.Cedrus.Input;
+using Gmich.Cedrus.IOC;
 using Gmich.Cedrus.Physics;
 using Gmich.Cedrus.Rendering;
 using Gmich.Cedrus.Scene;
 using Microsoft.Xna.Framework;
 using System;
+using System.Reflection;
 
 namespace Gmich.Cedrus
 {
@@ -16,9 +18,9 @@ namespace Gmich.Cedrus
         private readonly PhysicsUpdateManager physicsUpdateManager;
         private readonly RenderManager RenderManager;
 
-        public CedrusGame(ContainerBuilder builder)
+        public CedrusGame(IocBuilder builder)
         {
-            builder.RegisterModule<CendrusModule>();
+            builder.RegisterModules(Assembly.GetExecutingAssembly(), type => type.FullName.EndsWith("Module"));
             var container = builder.Build();
             gameTimeline = container.Resolve<GameTimeline>();
         }

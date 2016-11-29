@@ -103,6 +103,7 @@
     <Compile Include="Input\MouseInput.cs" />
     <Compile Include="Input\TouchInput.cs" />
     <Compile Include="IOC\CendrusIocException.cs" />
+    <Compile Include="IOC\CendrusModule.cs" />
     <Compile Include="IOC\IocBuilder.cs" />
     <Compile Include="IOC\IocContainer.cs" />
     <Compile Include="IOC\CleanedUpEntity.cs" />
@@ -124,7 +125,6 @@
     <Compile Include="Rendering\RenderedText.cs" />
     <Compile Include="Rendering\RenderedComponent.cs" />
     <Compile Include="Rendering\LayerRenderer.cs" />
-    <Compile Include="CendrusModule.cs" />
     <Compile Include="Rendering\RenderingUtilities.cs" />
     <Compile Include="Rendering\RenderManager.cs" />
     <Compile Include="Rendering\ScreenRenderer.cs" />

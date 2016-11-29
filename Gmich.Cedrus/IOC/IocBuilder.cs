@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection;
 
 namespace Gmich.Cedrus.IOC
 {
@@ -31,6 +32,32 @@ namespace Gmich.Cedrus.IOC
                 Lambda = lambda;
                 RegistrationTag = tag;
             }
+        }
+
+        public IocBuilder RegisterModule<Module>(Module module)
+              where Module : CendrusModule
+        {
+            module.Register(this);
+            return this;
+        }
+        public IocBuilder RegisterModule<Module>()
+            where Module : CendrusModule, new() => RegisterModule(new Module());
+
+        public IocBuilder RegisterModules(Assembly assembly, Predicate<Type> rule)
+        {
+            var modules = assembly
+            .GetTypes()
+            .Where(type =>
+                type.IsAssignableFrom(typeof(CendrusModule))
+                && rule(type))
+            .Select(type =>
+                (CendrusModule)Activator.CreateInstance(type));
+
+            foreach (var module in modules)
+            {
+                RegisterModule(module);
+            }
+            return this;
         }
 
         public IocBuilder Register<TService, TImpl>()
