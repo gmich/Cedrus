@@ -1,15 +1,7 @@
-﻿using System;
-
-namespace Gmich.Cedrus.Logging
+﻿namespace Gmich.Cedrus.Logging
 {
-    public interface IAppender 
+    internal interface IAuditor
     {
-        IAppender this[Type logger] { get; }
-
-        IAppender this[string logger] { get; }
-
-        LoggingContext LoggingContext { get; }
-
         void Trace(string message);
         void Trace(string message, params object[] args);
 

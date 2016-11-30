@@ -1,5 +1,7 @@
-﻿using System;
+﻿using Gmich.Cedrus.Logging;
+using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Reflection;
 
@@ -19,11 +21,11 @@ namespace Gmich.Cedrus.IOC
     {
         private readonly Dictionary<Type, RegistrationItem> registrations = new Dictionary<Type, RegistrationItem>();
         private IContainer container;
+        public EventHandler<IContainer> OnBuild { get; set; }
 
         private class RegistrationItem
         {
             public Func<object> Lambda { get; }
-
             public Func<object> Resolved { get; internal set; }
             public RegistrationTag RegistrationTag { get; }
 
@@ -48,7 +50,8 @@ namespace Gmich.Cedrus.IOC
             var modules = assembly
             .GetTypes()
             .Where(type =>
-                type.IsAssignableFrom(typeof(CendrusModule))
+                type.IsSubclassOf(typeof(CendrusModule))
+                && !type.IsAbstract
                 && rule(type))
             .Select(type =>
                 (CendrusModule)Activator.CreateInstance(type));
@@ -57,6 +60,16 @@ namespace Gmich.Cedrus.IOC
             {
                 RegisterModule(module);
             }
+
+            OnBuild += (sender, container) =>
+            {
+                var appender = container.Resolve<IAppender>()["Gmich.Cedrus.IOC"];
+                foreach (var module in modules)
+                {
+                    appender.Debug($"Registered module {module.GetType().FullName}");
+                }
+            };
+
             return this;
         }
 
@@ -169,10 +182,24 @@ namespace Gmich.Cedrus.IOC
             }
         }
 
+        public void LogRegistrations()
+        {
+            OnBuild += (sender, container) =>
+            {
+                var appender = container.Resolve<IAppender>()["Gmich.Cedrus.IOC"];
+                foreach (var registration in registrations.Keys)
+                {
+                    appender.Debug($"Registered abstract type {registration.FullName}");
+                }
+            };
+        }
+
         public IContainer Build()
         {
             container = new IocContainer(registrations
                 .ToDictionary(c => c.Key, c => new IocContainer.Entry(c.Value.RegistrationTag, GetNormalizedLambda(c.Value))));
+
+            OnBuild?.Invoke(this, container);
             return container;
         }
     }

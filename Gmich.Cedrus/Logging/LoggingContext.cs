@@ -3,7 +3,7 @@ using System.Collections.Generic;
 
 namespace Gmich.Cedrus.Logging
 {
-    public class InvocationContext
+    public class LoggingContext
     {
         private readonly Dictionary<string, object> logInfoTable = new Dictionary<string, object>();
              
