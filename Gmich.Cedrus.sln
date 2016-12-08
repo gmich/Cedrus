@@ -3,15 +3,21 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 14
 VisualStudioVersion = 14.0.25420.1
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Gmich.Cedrus", "Gmich.Cedrus\Gmich.Cedrus.csproj", "{F3FB29B2-201B-4697-B366-BD5FA6633B84}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Gmich.Cedrus", "Cedrus.Engine\Gmich.Cedrus\Gmich.Cedrus.csproj", "{F3FB29B2-201B-4697-B366-BD5FA6633B84}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Gmich.Cedrus.Weaving", "Gmich.Cedrus.Weaving\Gmich.Cedrus.Weaving.csproj", "{DDE9C6F2-5AD4-473F-8CC2-D89427AEDEE9}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Gmich.Cedrus.Weaving", "Cedrus.Engine\Gmich.Cedrus.Weaving\Gmich.Cedrus.Weaving.csproj", "{DDE9C6F2-5AD4-473F-8CC2-D89427AEDEE9}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Testing", "Testing", "{72005E8B-BA61-489B-BF61-4FC12127294C}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Gmich.Cedrus.Playground", "Testing\Gmich.Cedrus.Playground\Gmich.Cedrus.Playground.csproj", "{D16BB4B1-3937-4FD0-85AE-B039DA9146AB}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Gmich.Cedrus.Playground", "Cedrus.Engine\Testing\Gmich.Cedrus.Playground\Gmich.Cedrus.Playground.csproj", "{D16BB4B1-3937-4FD0-85AE-B039DA9146AB}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Gmich.Cedrus.UnitTests", "Testing\Gmich.Cedrus.UnitTests\Gmich.Cedrus.UnitTests.csproj", "{BA06CFE2-AE87-456C-B05B-E6B60F699F35}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Gmich.Cedrus.UnitTests", "Cedrus.Engine\Testing\Gmich.Cedrus.UnitTests\Gmich.Cedrus.UnitTests.csproj", "{BA06CFE2-AE87-456C-B05B-E6B60F699F35}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Gmich.Cedrus.IDE.Core", "Cedrus.IDE\Gmich.Cedrus.IDE.Core\Gmich.Cedrus.IDE.Core.csproj", "{AA4C107B-5687-4438-98B7-159BE9CB1F5A}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Cedrus.Engine", "Cedrus.Engine", "{8E783366-E829-4332-BDB1-2BC736A716BA}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Cedrus.IDE", "Cedrus.IDE", "{C85BD3D7-1C4D-41CE-BF6E-CC8A07DE9A8F}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -83,12 +89,32 @@ Global
 		{BA06CFE2-AE87-456C-B05B-E6B60F699F35}.Release|x64.Build.0 = Release|Any CPU
 		{BA06CFE2-AE87-456C-B05B-E6B60F699F35}.Release|x86.ActiveCfg = Release|Any CPU
 		{BA06CFE2-AE87-456C-B05B-E6B60F699F35}.Release|x86.Build.0 = Release|Any CPU
+		{AA4C107B-5687-4438-98B7-159BE9CB1F5A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{AA4C107B-5687-4438-98B7-159BE9CB1F5A}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{AA4C107B-5687-4438-98B7-159BE9CB1F5A}.Debug|ARM.ActiveCfg = Debug|Any CPU
+		{AA4C107B-5687-4438-98B7-159BE9CB1F5A}.Debug|ARM.Build.0 = Debug|Any CPU
+		{AA4C107B-5687-4438-98B7-159BE9CB1F5A}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{AA4C107B-5687-4438-98B7-159BE9CB1F5A}.Debug|x64.Build.0 = Debug|Any CPU
+		{AA4C107B-5687-4438-98B7-159BE9CB1F5A}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{AA4C107B-5687-4438-98B7-159BE9CB1F5A}.Debug|x86.Build.0 = Debug|Any CPU
+		{AA4C107B-5687-4438-98B7-159BE9CB1F5A}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{AA4C107B-5687-4438-98B7-159BE9CB1F5A}.Release|Any CPU.Build.0 = Release|Any CPU
+		{AA4C107B-5687-4438-98B7-159BE9CB1F5A}.Release|ARM.ActiveCfg = Release|Any CPU
+		{AA4C107B-5687-4438-98B7-159BE9CB1F5A}.Release|ARM.Build.0 = Release|Any CPU
+		{AA4C107B-5687-4438-98B7-159BE9CB1F5A}.Release|x64.ActiveCfg = Release|Any CPU
+		{AA4C107B-5687-4438-98B7-159BE9CB1F5A}.Release|x64.Build.0 = Release|Any CPU
+		{AA4C107B-5687-4438-98B7-159BE9CB1F5A}.Release|x86.ActiveCfg = Release|Any CPU
+		{AA4C107B-5687-4438-98B7-159BE9CB1F5A}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
+		{F3FB29B2-201B-4697-B366-BD5FA6633B84} = {8E783366-E829-4332-BDB1-2BC736A716BA}
+		{DDE9C6F2-5AD4-473F-8CC2-D89427AEDEE9} = {8E783366-E829-4332-BDB1-2BC736A716BA}
+		{72005E8B-BA61-489B-BF61-4FC12127294C} = {8E783366-E829-4332-BDB1-2BC736A716BA}
 		{D16BB4B1-3937-4FD0-85AE-B039DA9146AB} = {72005E8B-BA61-489B-BF61-4FC12127294C}
 		{BA06CFE2-AE87-456C-B05B-E6B60F699F35} = {72005E8B-BA61-489B-BF61-4FC12127294C}
+		{AA4C107B-5687-4438-98B7-159BE9CB1F5A} = {C85BD3D7-1C4D-41CE-BF6E-CC8A07DE9A8F}
 	EndGlobalSection
 EndGlobal

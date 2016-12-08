@@ -30,7 +30,11 @@ namespace Gmich.Cedrus
 
             builder.LogRegistrations();
             builder.RegisterModules(Assembly.GetExecutingAssembly(), type => type.FullName.EndsWith("Module"));
+            builder.RegisterSingleton(c => new GameSettings(Window));
+            builder.RegisterSingleton(c => new ContentContainer(Content));
+
             var container = builder.Build();
+
             gameTimeline = container.Resolve<GameTimeline>();
             Appender = container.Resolve<IAppender>()[GetType()];
         }

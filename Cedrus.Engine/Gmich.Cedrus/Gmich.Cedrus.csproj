@@ -54,14 +54,18 @@
       <HintPath>..\packages\MonoGame.Framework.DesktopGL.3.5.1.1679\lib\net40\OpenTK.dll</HintPath>
       <Private>True</Private>
     </Reference>
+    <Reference Include="PresentationCore" />
+    <Reference Include="PresentationFramework" />
     <Reference Include="System" />
     <Reference Include="System.Core" />
+    <Reference Include="System.Xaml" />
     <Reference Include="System.Xml.Linq" />
     <Reference Include="System.Data.DataSetExtensions" />
     <Reference Include="Microsoft.CSharp" />
     <Reference Include="System.Data" />
     <Reference Include="System.Net.Http" />
     <Reference Include="System.Xml" />
+    <Reference Include="WindowsBase" />
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Actors\Human.cs" />
@@ -108,6 +112,17 @@
     <Compile Include="Logging\NLogAppender.cs" />
     <Compile Include="Logging\NLogAuditor.cs" />
     <Compile Include="Logging\NLogLoggingModule.cs" />
+    <Compile Include="Primitives\Providers\IShapeProvider.cs" />
+    <Compile Include="Primitives\Providers\JsonShapeProvider.cs" />
+    <Compile Include="Primitives\Rendering\IPainter.cs" />
+    <Compile Include="Primitives\Rendering\MousePainter.cs" />
+    <Compile Include="Primitives\Shapes\Circle.cs" />
+    <Compile Include="Primitives\Shapes\DynamicShape.cs" />
+    <Compile Include="Primitives\Shapes\FixedBoundsShape.cs" />
+    <Compile Include="Primitives\Shapes\IShape.cs" />
+    <Compile Include="Primitives\Shapes\RelativeRenderedShape.cs" />
+    <Compile Include="Primitives\Shapes\ShapeDeclaration.cs" />
+    <Compile Include="Primitives\Shapes\VertexPosition.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Rendering\ARenderer.cs" />
     <Compile Include="Rendering\RenderedText.cs" />
