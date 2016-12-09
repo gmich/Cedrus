@@ -45,14 +45,16 @@ namespace Gmich.Cedrus.IOC
         public IocBuilder RegisterModule<Module>()
             where Module : CendrusModule, new() => RegisterModule(new Module());
 
-        public IocBuilder RegisterModules(Assembly assembly, Predicate<Type> rule)
+        public IocBuilder RegisterModules(Assembly assembly, Predicate<Type> rule = null)
         {
+            var picker = rule ?? new Predicate<Type>(t => true);
+
             var modules = assembly
             .GetTypes()
             .Where(type =>
                 type.IsSubclassOf(typeof(CendrusModule))
                 && !type.IsAbstract
-                && rule(type))
+                && picker(type))
             .Select(type =>
                 (CendrusModule)Activator.CreateInstance(type));
 

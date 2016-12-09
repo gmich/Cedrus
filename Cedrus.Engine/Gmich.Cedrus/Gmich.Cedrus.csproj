@@ -75,10 +75,10 @@
     <Compile Include="Camera\ICamera.cs" />
     <Compile Include="Common\DisposableEntry.cs" />
     <Compile Include="CedrusGame.cs" />
+    <Compile Include="Common\ReflectionHelper.cs" />
     <Compile Include="Common\SubscriberBase.cs" />
-    <Compile Include="Content\AContainer.cs" />
+    <Compile Include="Content\AssetContainerBuilder.cs" />
     <Compile Include="Content\AssetContainer.cs" />
-    <Compile Include="Content\ContentContainer.cs" />
     <Compile Include="Entities\DynamicEntity.cs" />
     <Compile Include="GameSettings.cs" />
     <Compile Include="Input\GamePadInput.cs" />

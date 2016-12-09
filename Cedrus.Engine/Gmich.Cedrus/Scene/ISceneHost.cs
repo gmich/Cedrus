@@ -12,8 +12,6 @@ namespace Gmich.Cedrus.Scene
         GameSettings GameSettings { get; }
         SceneSettings SceneSettings { get; }
         GameWindow Window { get; }
-        ContentContainer ContentContainer { get; }
-
         void Unload();
         void HandleInput(InputHandler inputManager, Timeline time);
         void FixedUpdate(Timeline time);

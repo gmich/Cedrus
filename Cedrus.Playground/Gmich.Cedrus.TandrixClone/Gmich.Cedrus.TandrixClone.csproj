@@ -56,6 +56,10 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Layers\BackgroundLayerRenderer.cs" />
+    <Compile Include="Layers\Board.cs" />
+    <Compile Include="Layers\Graphics.cs" />
+    <Compile Include="Layers\LayersModule.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
@@ -68,6 +72,10 @@
       <Project>{F3FB29B2-201B-4697-B366-BD5FA6633B84}</Project>
       <Name>Gmich.Cedrus</Name>
     </ProjectReference>
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="Content\Background\mask.jpg" />
+    <Content Include="Content\Background\pattern.bmp" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

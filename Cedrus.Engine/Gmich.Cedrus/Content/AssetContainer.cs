@@ -1,44 +1,20 @@
 ﻿using Microsoft.Xna.Framework.Content;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 
-namespace Gmich.Cedrus
+namespace Gmich.Cedrus.Content
 {
+
     public class AssetContainer<TAsset>
         where TAsset : class
     {
 
-        private readonly Dictionary<string, TAsset> assets = new Dictionary<string, TAsset>();
-        public ContentManager Content { get; }
+        private readonly Dictionary<string, TAsset> assets;
 
-        public AssetContainer(ContentManager content)
+        public AssetContainer(Dictionary<string, TAsset> assets)
         {
-            Content = content;
-        }
-
-        public bool Add(string id, Func<ContentManager, TAsset> assetRetriever)
-        {
-            if (assets.ContainsKey(id))
-            {
-                return false;
-            }
-            assets.Add(id, assetRetriever(Content));
-            return true;
-        }
-
-        public bool Add(string id, string path)
-        {
-            if (assets.ContainsKey(id))
-            {
-                return false;
-            }
-            assets.Add(id, Content.Load<TAsset>(path));
-            return true;
-        }
-
-        public bool Remove(string id)
-        {
-            return assets.Remove(id);
+            this.assets = assets;
         }
 
         public TAsset this[string id]
