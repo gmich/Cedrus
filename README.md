@@ -5,4 +5,4 @@
 
 <img src="https://raw.githubusercontent.com/gmich/Cedrus/master/Cedrus.Engine/Gmich.Cedrus/Assets/cedrus.png" alt="Cedrus logo" title="Cedrus" hspace="10" align="left">  
 
-A game engine for story driven games
+An event driven game framework
