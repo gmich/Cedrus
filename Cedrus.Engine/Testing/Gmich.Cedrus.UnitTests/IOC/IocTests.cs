@@ -135,7 +135,65 @@ namespace Gmich.Cedrus.UnitTests.IOC
             Assert.AreNotEqual(f1.Ds.FirstOrDefault().B, f2.Ds.FirstOrDefault().B);
 
             Assert.AreEqual(f1.Ds.FirstOrDefault().A, f2.Ds.FirstOrDefault().A);
-            CollectionAssert.AreEqual(f1.Ds.Select(c=>c.A).ToArray(), f2.Ds.Select(c => c.A).ToArray());
+            CollectionAssert.AreEqual(f1.Ds.Select(c => c.A).ToArray(), f2.Ds.Select(c => c.A).ToArray());
+        }
+
+        [TestMethod]
+        [TestCategory(Category.IOC)]
+        public void ResolveMultipleWithSingletonAndMatch()
+        {
+            var builder = new IocBuilder();
+
+            builder.RegisterSingleton<IA, A>().Match<A>();
+            builder.Register<IB, B>();
+            builder.Register<IC, C>();
+            builder.Register<ID, D>();
+            builder.Register<ID, D>();
+            builder.RegisterSingleton<ID, D>().Match<D>();
+            builder.Register<IF, F>();
+            var container = builder.Build();
+
+            var f1 = container.Resolve<IF>();
+            var f2 = container.Resolve<IF>();
+            var a = container.Resolve<A>();
+            var d = container.Resolve<D>();
+            Assert.AreNotEqual(f1, f2);
+            Assert.AreNotEqual(f1.Ds.FirstOrDefault().B, f2.Ds.FirstOrDefault().B);
+
+            Assert.AreEqual(f1.Ds.FirstOrDefault().A, f2.Ds.FirstOrDefault().A);
+            CollectionAssert.AreEqual(f1.Ds.Select(c => c.A).ToArray(), f2.Ds.Select(c => c.A).ToArray());
+            Assert.AreEqual(f1.Ds.FirstOrDefault().A, a);
+            Assert.AreEqual(f1.Ds.LastOrDefault(), d);
+        }
+
+        [TestMethod]
+        [TestCategory(Category.IOC)]
+        public void ResolveMultipelWithScope()
+        {
+            var builder = new IocBuilder();
+
+            builder.RegisterSingleton<IA, A>();
+            builder.Register<IB, B>();
+            builder.Register<IC, C>();
+            builder.Register<ID, D>();
+            builder.Register<ID, D>();
+            builder.RegisterPerScope<ID, D>();
+
+
+            builder.Register<IF, F>();
+            var container = builder.Build();
+
+            IEnumerable<ID> d1;
+            using (var scope = container.Scope)
+            {
+                d1 = scope.Resolve<IEnumerable<ID>>();
+                var d2 = scope.Resolve<IEnumerable<ID>>();
+                //Assert.AreNotEqual(d1.FirstOrDefault().GetHashCode(), d2.LastOrDefault().GetHashCode());   
+                Assert.AreEqual(d1.LastOrDefault(), d2.LastOrDefault());
+            }
+            var d3 = container.Resolve<IEnumerable<ID>>();
+            Assert.AreNotEqual(d1.FirstOrDefault(), d3.LastOrDefault());
+            Assert.AreNotEqual(d1.LastOrDefault(), d3.LastOrDefault());
         }
 
         [TestMethod]
@@ -307,6 +365,22 @@ namespace Gmich.Cedrus.UnitTests.IOC
 
         [TestMethod]
         [TestCategory(Category.IOC)]
+        public void ResolveSingletonWithMatch()
+        {
+            var builder = new IocBuilder();
+
+            builder.RegisterSingleton<IA, A>().Match<A>();
+            var container = builder.Build();
+
+            var a1 = container.Resolve<IA>();
+            var a2 = container.Resolve<IA>();
+            var a3 = container.Resolve<A>();
+            Assert.AreEqual(a1, a2);
+            Assert.AreEqual(a2, a3);
+        }
+
+        [TestMethod]
+        [TestCategory(Category.IOC)]
         public void ResolveSingletonWithDependencies()
         {
             var container = new IocBuilder()
@@ -383,7 +457,6 @@ namespace Gmich.Cedrus.UnitTests.IOC
             Assert.AreEqual(b1, b2);
 
             b1 = container.Resolve<IB>();
-            b2 = container.Resolve<IB>();
 
             Assert.AreNotEqual(b1, b2);
         }
@@ -413,7 +486,6 @@ namespace Gmich.Cedrus.UnitTests.IOC
             Assert.AreEqual(b1, b2);
 
             b1 = container.Resolve<IB>();
-            b2 = container.Resolve<IB>();
 
             Assert.AreNotEqual(b1, b2);
         }

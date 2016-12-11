@@ -6,8 +6,11 @@ namespace Gmich.Cedrus.IOC
 {
     public class IocContainer : CleanedupEntity, IContainer
     {
-        protected readonly Dictionary<Type, List<object>> resolved = new Dictionary<Type, List<object>>();
+        internal readonly Dictionary<Type, List<object>> resolved = new Dictionary<Type, List<object>>();
         protected readonly Dictionary<Type, Entry> registrations;
+        private IocContainer child;
+
+        internal IocContainer ActiveContainer => child?.ActiveContainer ?? this;
 
         public class Entry
         {
@@ -34,14 +37,12 @@ namespace Gmich.Cedrus.IOC
         {
             if (registrations.ContainsKey(serviceType))
             {
-                var obj = InternalResolve(serviceType);
-                AddResolved(serviceType, obj);
-                return obj;
+                return InternalResolve(serviceType);
             }
             throw new CendrusIocException($"No registration for {serviceType.FullName}");
         }
 
-        private void AddResolved(Type serviceType, object obj)
+        internal void AddResolved(Type serviceType, object obj)
         {
             if (resolved.ContainsKey(serviceType))
             {
@@ -56,7 +57,14 @@ namespace Gmich.Cedrus.IOC
 
         protected virtual object InternalResolve(Type serviceType) => registrations[serviceType].Resolve();
 
-        public IContainer Scope => new IocScope(registrations);
+        public IContainer Scope
+        {
+            get
+            {
+                child = new IocContainer(registrations);
+                return child;
+            }
+        }
 
         protected override void OnDisposal()
         {
@@ -67,27 +75,8 @@ namespace Gmich.Cedrus.IOC
             resolved.Clear();
         }
 
-        private class IocScope : IocContainer
-        {
-            public IocScope(Dictionary<Type, Entry> registrations) : base(registrations)
-            {
-            }
-
-            protected override object InternalResolve(Type serviceType)
-            {
-                if (registrations[serviceType].Tag.HasFlag(RegistrationTag.Scope))
-                {
-                    if (resolved.ContainsKey(serviceType))
-                    {
-                        return resolved[serviceType].Single();
-                    }
-                }
-                return base.InternalResolve(serviceType);
-            }
-        }
 
 
     }
-
 
 }

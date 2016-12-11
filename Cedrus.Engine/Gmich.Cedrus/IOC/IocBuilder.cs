@@ -22,7 +22,9 @@ namespace Gmich.Cedrus.IOC
     public class IocBuilder
     {
         private Dictionary<RegistrationKey, RegistrationItem> registrations = new Dictionary<RegistrationKey, RegistrationItem>();
-        private IContainer container;
+        private IocContainer container;
+        private RegistrationItem lastItem;
+
         public EventHandler<IContainer> OnBuild { get; set; }
 
         private class RegistrationKey
@@ -45,6 +47,21 @@ namespace Gmich.Cedrus.IOC
                 RegistrationTag = tag;
             }
         }
+
+
+        public IocBuilder Match<TAbstract>() => Match(typeof(TAbstract));
+
+        public IocBuilder Match(Type type)
+        {
+            if (lastItem == null)
+            {
+                throw new CendrusIocException("No registration found for match");
+            }
+
+            registrations.Add(new RegistrationKey(type), lastItem);
+            return this;
+        }
+
 
         public IocBuilder RegisterModule<Module>(Module module)
               where Module : CendrusModule
@@ -105,7 +122,7 @@ namespace Gmich.Cedrus.IOC
         public IocBuilder Register<TAbstract, TImpl>()
             where TImpl : TAbstract
         {
-            return AddRegistration<TAbstract>(RegistrationTag.Default, () => CreateInstance(typeof(TImpl)));
+            return AddRegistration<TAbstract>(RegistrationTag.Default, () => CreateInstance(typeof(TAbstract), typeof(TImpl)));
         }
 
         public IocBuilder Register<TAbstract>(Func<IContainer, TAbstract> resolver)
@@ -116,7 +133,7 @@ namespace Gmich.Cedrus.IOC
         public IocBuilder RegisterPerScope<TAbstract, TImpl>()
             where TImpl : TAbstract
         {
-            return AddRegistration<TAbstract>(RegistrationTag.Scope | RegistrationTag.Default, () => CreateInstance(typeof(TImpl)));
+            return AddRegistration<TAbstract>(RegistrationTag.Scope | RegistrationTag.Default, () => CreateInstance(typeof(TAbstract), typeof(TImpl)));
         }
 
         public IocBuilder RegisterPerScope<TAbstract>(Func<IContainer, TAbstract> resolver)
@@ -127,7 +144,7 @@ namespace Gmich.Cedrus.IOC
         public IocBuilder RegisterSingleton<TAbstract, TImpl>()
             where TImpl : TAbstract
         {
-            var lazy = new Lazy<object>(() => CreateInstance(typeof(TImpl)));
+            var lazy = new Lazy<object>(() => CreateInstance(typeof(TAbstract), typeof(TImpl)));
             return AddRegistration<TAbstract>(RegistrationTag.Singleton, () => lazy.Value);
         }
 
@@ -140,7 +157,8 @@ namespace Gmich.Cedrus.IOC
         private IocBuilder AddRegistration<TAbstract>(RegistrationTag tag, Func<object> lambda)
         {
             var type = typeof(TAbstract);
-            registrations.Add(new RegistrationKey(type), new RegistrationItem(tag, lambda));
+            lastItem = new RegistrationItem(tag, lambda);
+            registrations.Add(new RegistrationKey(type), lastItem);
             return this;
         }
 
@@ -154,12 +172,12 @@ namespace Gmich.Cedrus.IOC
             }
             if (!serviceType.IsAbstract)
             {
-                return CreateInstance(serviceType);
+                return CreateInstance(serviceType, serviceType);
             }
             throw new CendrusIocException($"Unable to resolve abstract type {serviceType}. Component is not registered");
         }
 
-        private Func<object> CreateInstance(Type implementationType)
+        private Func<object> CreateInstance(Type abstractType, Type implementationType)
         {
             var ctor = implementationType.GetConstructors().FirstOrDefault();
             var parameterTypes = ctor.GetParameters().Select(p => p.ParameterType).ToArray();
@@ -167,7 +185,9 @@ namespace Gmich.Cedrus.IOC
             if (parameterTypes.Length == 0)
             {
                 return () =>
-                    Activator.CreateInstance(implementationType);
+                {
+                    return Activator.CreateInstance(implementationType);
+                };
             }
 
             var dependencies = parameterTypes
@@ -175,21 +195,45 @@ namespace Gmich.Cedrus.IOC
                 .ToArray();
 
             return () =>
-                Activator.CreateInstance(implementationType, dependencies.Select(d => d.Invoke()).ToArray());
+            {
+                return Activator.CreateInstance(implementationType, dependencies.Select(d => d.Invoke()).ToArray());
+            };
         }
 
         private Func<object> GetNormalizedLambda(Type type, RegistrationItem item)
         {
             if (item.Resolved == null)
             {
-                item.Resolved = Normalize(type, item);
+                item.Resolved = Cache(type, Normalize(type, item));
             }
             return item.Resolved;
         }
 
+        private Func<object> Cache(Type type, Func<object> cached)
+        {
+            return () =>
+            {
+                var obj = cached();
+                container.ActiveContainer.AddResolved(type, obj);
+                return obj;
+            };
+        }
+
         private Func<object> Normalize(Type type, RegistrationItem item)
         {
-            if (item.RegistrationTag.HasFlag(RegistrationTag.Default))
+            if (item.RegistrationTag.HasFlag(RegistrationTag.Scope))
+            {
+                var lambda = item.RegistrationTag.HasFlag(RegistrationTag.Default) ? item.Lambda() : item.Lambda;
+                return new Func<object>(() =>
+                {
+                    if (container.ActiveContainer.resolved.ContainsKey(type))
+                    {
+                        return container.ActiveContainer.resolved[type].First();
+                    }
+                    return ((Func<object>)lambda).Invoke();
+                });
+            }
+            else if (item.RegistrationTag.HasFlag(RegistrationTag.Default))
             {
                 return (Func<object>)item.Lambda();
             }
@@ -207,7 +251,8 @@ namespace Gmich.Cedrus.IOC
             {
                 var dynamicCast = typeof(Enumerable).GetMethod("Cast").MakeGenericMethod(new[] { type.GetGenericArguments().First() });
                 var lambda = (IEnumerable<Func<object>>)item.Lambda();
-                return () => dynamicCast.Invoke(null, new[] { lambda.Select(c => c.Invoke()) });
+
+                return () => dynamicCast.Invoke(null, new[] { lambda.Select(c => c.Invoke()).ToArray() });
             }
             else
             {
@@ -226,7 +271,6 @@ namespace Gmich.Cedrus.IOC
                 }
             };
         }
-
 
         public IContainer Build()
         {
@@ -251,14 +295,9 @@ namespace Gmich.Cedrus.IOC
                  });
 
             var registrationDictionary = new Dictionary<Type, IocContainer.Entry>();
-
             foreach (var entry in registrations)
             {
-
                 registrationDictionary.Add(entry.Key.Type, new IocContainer.Entry(entry.Value.RegistrationTag, GetNormalizedLambda(entry.Key.Type, entry.Value)));
-
-
-                // var objects = entry.Select(c => GetNormalizedLambda(c.Value)).ToList();
             }
 
             container = new IocContainer(registrationDictionary);
