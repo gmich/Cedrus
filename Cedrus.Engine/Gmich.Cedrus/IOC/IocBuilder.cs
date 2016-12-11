@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Reflection;
+using System.Collections;
 
 namespace Gmich.Cedrus.IOC
 {
@@ -14,15 +15,24 @@ namespace Gmich.Cedrus.IOC
         Default = 1,
         Lambda = 2,
         Singleton = 4,
-        Scope = 8
+        Scope = 8,
+        Enumerable = 16
     }
 
     public class IocBuilder
     {
-        private readonly Dictionary<Type, RegistrationItem> registrations = new Dictionary<Type, RegistrationItem>();
+        private Dictionary<RegistrationKey, RegistrationItem> registrations = new Dictionary<RegistrationKey, RegistrationItem>();
         private IContainer container;
         public EventHandler<IContainer> OnBuild { get; set; }
 
+        private class RegistrationKey
+        {
+            public RegistrationKey(Type type)
+            {
+                Type = type;
+            }
+            public Type Type { get; }
+        }
         private class RegistrationItem
         {
             public Func<object> Lambda { get; }
@@ -75,6 +85,23 @@ namespace Gmich.Cedrus.IOC
             return this;
         }
 
+        public IocBuilder RegisterSingletonSubclassesOf(Assembly assembly, Type classType)
+        {
+            var method = GetType().GetMethod("RegisterSingleton");
+            var generic = method.MakeGenericMethod(classType);
+
+            foreach (var type in assembly
+            .GetTypes()
+            .Where(type =>
+                type.IsSubclassOf(classType)
+                && !type.IsAbstract))
+            {
+                generic.Invoke(this, new[] { classType, type });
+            }
+
+            return this;
+        }
+
         public IocBuilder Register<TAbstract, TImpl>()
             where TImpl : TAbstract
         {
@@ -113,19 +140,17 @@ namespace Gmich.Cedrus.IOC
         private IocBuilder AddRegistration<TAbstract>(RegistrationTag tag, Func<object> lambda)
         {
             var type = typeof(TAbstract);
-            if (registrations.ContainsKey(type))
-            {
-                throw new CendrusIocException($"${type.FullName} is already registered");
-            }
-            registrations.Add(type, new RegistrationItem(tag, lambda));
+            registrations.Add(new RegistrationKey(type), new RegistrationItem(tag, lambda));
             return this;
         }
 
         private Func<object> Resolve(Type serviceType)
         {
-            if (registrations.ContainsKey(serviceType))
+            var entry = registrations.FirstOrDefault(c => c.Key.Type == serviceType);
+
+            if (entry.Value != null)
             {
-                return GetNormalizedLambda(registrations[serviceType]);
+                return GetNormalizedLambda(entry.Key.Type, registrations[entry.Key]);
             }
             if (!serviceType.IsAbstract)
             {
@@ -153,16 +178,16 @@ namespace Gmich.Cedrus.IOC
                 Activator.CreateInstance(implementationType, dependencies.Select(d => d.Invoke()).ToArray());
         }
 
-        private Func<object> GetNormalizedLambda(RegistrationItem item)
+        private Func<object> GetNormalizedLambda(Type type, RegistrationItem item)
         {
             if (item.Resolved == null)
             {
-                item.Resolved = Normalize(item);
+                item.Resolved = Normalize(type, item);
             }
             return item.Resolved;
         }
 
-        private Func<object> Normalize(RegistrationItem item)
+        private Func<object> Normalize(Type type, RegistrationItem item)
         {
             if (item.RegistrationTag.HasFlag(RegistrationTag.Default))
             {
@@ -178,6 +203,12 @@ namespace Gmich.Cedrus.IOC
                 var lazy = new Lazy<object>(resolve);
                 return new Func<object>(() => lazy.Value);
             }
+            else if (item.RegistrationTag.HasFlag(RegistrationTag.Enumerable))
+            {
+                var dynamicCast = typeof(Enumerable).GetMethod("Cast").MakeGenericMethod(new[] { type.GetGenericArguments().First() });
+                var lambda = (IEnumerable<Func<object>>)item.Lambda();
+                return () => dynamicCast.Invoke(null, new[] { lambda.Select(c => c.Invoke()) });
+            }
             else
             {
                 return () => item.Lambda();
@@ -191,19 +222,52 @@ namespace Gmich.Cedrus.IOC
                 var appender = container.Resolve<IAppender>()["Gmich.Cedrus.IOC"];
                 foreach (var registration in registrations.Keys)
                 {
-                    appender.Debug($"Registered abstract type {registration.FullName}");
+                    appender.Debug($"Registered abstract type {registration.Type.FullName}");
                 }
             };
         }
 
+
         public IContainer Build()
         {
-            container = new IocContainer(registrations
-                .ToDictionary(c => c.Key, c => new IocContainer.Entry(c.Value.RegistrationTag, GetNormalizedLambda(c.Value))));
+            registrations = registrations
+                 .GroupBy(c => c.Key.Type)
+                 .ToDictionary(entry =>
+                 {
+                     return (entry.Count() == 1) ? new RegistrationKey(entry.Key) : new RegistrationKey(typeof(IEnumerable<>).MakeGenericType(entry.Key));
+                 },
+                 entry =>
+                 {
+                     if (entry.Count() > 1)
+                     {
+                         var enumerableType = typeof(IEnumerable<>).MakeGenericType(entry.Key);
+
+                         return new RegistrationItem(RegistrationTag.Enumerable, () => entry.Select(c => GetNormalizedLambda(entry.Key, c.Value)).ToArray());
+                     }
+                     else
+                     {
+                         return entry.LastOrDefault().Value;
+                     }
+                 });
+
+            var registrationDictionary = new Dictionary<Type, IocContainer.Entry>();
+
+            foreach (var entry in registrations)
+            {
+
+                registrationDictionary.Add(entry.Key.Type, new IocContainer.Entry(entry.Value.RegistrationTag, GetNormalizedLambda(entry.Key.Type, entry.Value)));
+
+
+                // var objects = entry.Select(c => GetNormalizedLambda(c.Value)).ToList();
+            }
+
+            container = new IocContainer(registrationDictionary);
 
             OnBuild?.Invoke(this, container);
             return container;
         }
+
+
     }
 
 }

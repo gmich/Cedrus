@@ -2,6 +2,8 @@
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Gmich.Cedrus.IOC;
 using Moq;
+using System.Collections.Generic;
+using System.Linq;
 
 namespace Gmich.Cedrus.UnitTests.IOC
 {
@@ -11,7 +13,11 @@ namespace Gmich.Cedrus.UnitTests.IOC
         public interface IA { }
         public interface IB { }
         public interface IC { IB B { get; } }
-        public interface ID { }
+        public interface ID
+        {
+            IA A { get; }
+            IB B { get; }
+        }
         public interface IE : IDisposable { }
 
         public class A : IA { }
@@ -25,7 +31,14 @@ namespace Gmich.Cedrus.UnitTests.IOC
             public IB B { get; }
         }
 
-        public class D : ID { public D(IA a, IB b, IC c) { } }
+        public class D : ID
+        {
+            public D(IA a, IB b, IC c) { A = a; B = b; }
+
+            public IA A { get; }
+
+            public IB B { get; }
+        }
         public class E : IE
         {
             public bool IsDisposed { get; private set; }
@@ -33,6 +46,21 @@ namespace Gmich.Cedrus.UnitTests.IOC
             {
                 IsDisposed = true;
             }
+        }
+
+        public interface IF
+        {
+            IEnumerable<ID> Ds { get; }
+        }
+        public class F : IF
+        {
+            public F(IEnumerable<ID> ds)
+            {
+                Ds = ds;
+            }
+
+            public IEnumerable<ID> Ds { get; }
+
         }
 
 
@@ -50,6 +78,64 @@ namespace Gmich.Cedrus.UnitTests.IOC
             var b = container.Resolve<IA>();
 
             Assert.AreNotEqual(a, b);
+        }
+
+        [TestMethod]
+        [TestCategory(Category.IOC)]
+        public void ResolveMultipleOfSameType()
+        {
+            var builder = new IocBuilder();
+
+            builder.Register<IA, A>();
+            builder.Register<IA, A>();
+            var container = builder.Build();
+
+            var a = container.Resolve<IEnumerable<IA>>().ToArray();
+
+            Assert.AreEqual(2, a.Count());
+            Assert.AreNotEqual(a[0], a[1]);
+        }
+
+        [TestMethod]
+        [TestCategory(Category.IOC)]
+        public void ResolveMultipleOfSameTypeAsParameter()
+        {
+            var builder = new IocBuilder();
+
+            builder.Register<IA, A>();
+            builder.Register<IB, B>();
+            builder.Register<IC, C>();
+            builder.Register<ID, D>();
+            builder.Register<ID, D>();
+            builder.Register<IF, F>();
+            var container = builder.Build();
+
+            var f1 = container.Resolve<IF>();
+
+        }
+
+        [TestMethod]
+        [TestCategory(Category.IOC)]
+        public void ResolveMultipleWithSingleton()
+        {
+            var builder = new IocBuilder();
+
+            builder.RegisterSingleton<IA, A>();
+            builder.Register<IB, B>();
+            builder.Register<IC, C>();
+            builder.Register<ID, D>();
+            builder.Register<ID, D>();
+            builder.Register<IF, F>();
+            var container = builder.Build();
+
+            var f1 = container.Resolve<IF>();
+            var f2 = container.Resolve<IF>();
+
+            Assert.AreNotEqual(f1, f2);
+            Assert.AreNotEqual(f1.Ds.FirstOrDefault().B, f2.Ds.FirstOrDefault().B);
+
+            Assert.AreEqual(f1.Ds.FirstOrDefault().A, f2.Ds.FirstOrDefault().A);
+            CollectionAssert.AreEqual(f1.Ds.Select(c=>c.A).ToArray(), f2.Ds.Select(c => c.A).ToArray());
         }
 
         [TestMethod]
@@ -251,16 +337,6 @@ namespace Gmich.Cedrus.UnitTests.IOC
             Assert.AreEqual(a1, a2);
         }
 
-        [TestMethod]
-        [TestCategory(Category.IOC)]
-        [ExpectedException(typeof(CendrusIocException))]
-        public void DoubleRegistrationThrowsException()
-        {
-            var builder = new IocBuilder();
-
-            builder.Register<A, A>();
-            builder.Register<A, A>();
-        }
 
 
         [TestMethod]
