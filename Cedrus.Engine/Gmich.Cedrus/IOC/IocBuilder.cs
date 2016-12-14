@@ -104,8 +104,8 @@ namespace Gmich.Cedrus.IOC
 
         public IocBuilder RegisterSingletonSubclassesOf(Assembly assembly, Type classType)
         {
-            var method = GetType().GetMethod("RegisterSingleton");
-            var generic = method.MakeGenericMethod(classType);
+            var method = GetType().GetMethods().Where(m => m.Name == "RegisterSingleton" && m.IsGenericMethodDefinition && m.GetGenericArguments().Count() == 2).First();
+            var match = GetType().GetMethods().Where(m => m.Name == "Match" && !m.IsGenericMethodDefinition).First();
 
             foreach (var type in assembly
             .GetTypes()
@@ -113,7 +113,8 @@ namespace Gmich.Cedrus.IOC
                 type.IsSubclassOf(classType)
                 && !type.IsAbstract))
             {
-                generic.Invoke(this, new[] { classType, type });
+                var generic = method.MakeGenericMethod(classType, type);
+                match.Invoke(generic.Invoke(this, new object[] { }), new[] { type });
             }
 
             return this;
@@ -274,30 +275,36 @@ namespace Gmich.Cedrus.IOC
 
         public IContainer Build()
         {
-            registrations = registrations
-                 .GroupBy(c => c.Key.Type)
-                 .ToDictionary(entry =>
-                 {
-                     return (entry.Count() == 1) ? new RegistrationKey(entry.Key) : new RegistrationKey(typeof(IEnumerable<>).MakeGenericType(entry.Key));
-                 },
-                 entry =>
-                 {
-                     if (entry.Count() > 1)
-                     {
-                         var enumerableType = typeof(IEnumerable<>).MakeGenericType(entry.Key);
+            var groupedRegistrations = registrations
+                 .GroupBy(c => c.Key.Type);
 
-                         return new RegistrationItem(RegistrationTag.Enumerable, () => entry.Select(c => GetNormalizedLambda(entry.Key, c.Value)).ToArray());
-                     }
-                     else
-                     {
-                         return entry.LastOrDefault().Value;
-                     }
-                 });
-
-            var registrationDictionary = new Dictionary<Type, IocContainer.Entry>();
-            foreach (var entry in registrations)
+            var expandedRegistrations = new Dictionary<RegistrationKey, RegistrationItem>();
+            foreach (var entry in groupedRegistrations)
             {
-                registrationDictionary.Add(entry.Key.Type, new IocContainer.Entry(entry.Value.RegistrationTag, GetNormalizedLambda(entry.Key.Type, entry.Value)));
+                if (entry.Count() == 1)
+                {
+                    expandedRegistrations.Add(new RegistrationKey(entry.Key), entry.LastOrDefault().Value);
+                }
+                if (entry.Key.IsGenericType && entry.Key.GetGenericTypeDefinition() == typeof(IEnumerable<>))
+                {
+                    continue;
+                }
+                var enumerableType = typeof(IEnumerable<>).MakeGenericType(entry.Key);
+                var item = new RegistrationItem(RegistrationTag.Enumerable, () => entry.Select(c => GetNormalizedLambda(entry.Key, c.Value)).ToArray());
+                expandedRegistrations.Add(new RegistrationKey(enumerableType), item);
+            }
+            registrations = expandedRegistrations;
+            var registrationDictionary = new Dictionary<Type, IocContainer.Entry>();
+            foreach (var entry in expandedRegistrations)
+            {
+                try
+                {
+                    registrationDictionary.Add(entry.Key.Type, new IocContainer.Entry(entry.Value.RegistrationTag, GetNormalizedLambda(entry.Key.Type, entry.Value)));
+                }
+                catch (Exception ex)
+                {
+                    throw new CendrusIocException($"Failed to build {entry.Value.RegistrationTag} dependency {entry.Key.Type.FullName}. {ex.Message}", ex);
+                }
             }
 
             container = new IocContainer(registrationDictionary);

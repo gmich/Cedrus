@@ -381,6 +381,22 @@ namespace Gmich.Cedrus.UnitTests.IOC
 
         [TestMethod]
         [TestCategory(Category.IOC)]
+        public void ResolveEnumerableSingletonWithMatch()
+        {
+            var builder = new IocBuilder();
+
+            builder.RegisterSingleton<IA, A>().Match<A>();
+            var container = builder.Build();
+
+            var a3 = container.Resolve<IEnumerable<A>>();
+            var a1 = container.Resolve<IA>();
+            var a2 = container.Resolve<IA>();
+            Assert.AreEqual(a1, a2);
+            Assert.AreEqual(a2, a3.FirstOrDefault());
+        }
+
+        [TestMethod]
+        [TestCategory(Category.IOC)]
         public void ResolveSingletonWithDependencies()
         {
             var container = new IocBuilder()

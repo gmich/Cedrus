@@ -1,4 +1,5 @@
-﻿using Gmich.Cedrus.Input;
+﻿using Gmich.Cedrus.Content;
+using Gmich.Cedrus.Input;
 using Gmich.Cedrus.IOC;
 using Gmich.Cedrus.Logging;
 using Gmich.Cedrus.Physics;
@@ -7,6 +8,7 @@ using Gmich.Cedrus.Scene;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Input;
 using System;
+using System.Collections.Generic;
 using System.Reflection;
 
 namespace Gmich.Cedrus
@@ -15,6 +17,7 @@ namespace Gmich.Cedrus
     public class CedrusGame : Game, IDisposable
     {
         private readonly GameTimeline gameTimeline;
+        private readonly IContainer container;
         //private readonly InputManager inputManager;
         //private readonly LogicUpdateManager logicUpdateManager;
         //private readonly PhysicsUpdateManager physicsUpdateManager;
@@ -31,11 +34,21 @@ namespace Gmich.Cedrus
             builder.LogRegistrations();
             builder.RegisterModules(Assembly.GetExecutingAssembly(), type => type.FullName.EndsWith("Module"));
             builder.RegisterSingleton(c => new GameSettings(Window));
-
-            var container = builder.Build();
+            builder.RegisterSingleton(c => Content);
+            EnumerateAssemblies(assembly => builder.RegisterSingletonSubclassesOf(assembly, typeof(CommonAssetBuilder)));
+           
+            container = builder.Build();
 
             gameTimeline = container.Resolve<GameTimeline>();
             Appender = container.Resolve<IAppender>()[GetType()];
+        }
+
+        private void EnumerateAssemblies(Action<Assembly> action)
+        {
+            foreach(var assembly in AppDomain.CurrentDomain.GetAssemblies())
+            {
+                action(assembly);
+            }
         }
 
         protected override void Initialize()
@@ -45,6 +58,11 @@ namespace Gmich.Cedrus
 
         protected override void LoadContent()
         {
+            foreach (var builder in container.Resolve<IEnumerable<CommonAssetBuilder>>())
+            {
+                builder.Font.Build(Content);
+                builder.Textures.Build(Content);
+            }
         }
 
         protected override void UnloadContent()

@@ -1,4 +1,5 @@
 ﻿using Microsoft.Xna.Framework.Content;
+using Microsoft.Xna.Framework.Graphics;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -35,6 +36,12 @@ namespace Gmich.Cedrus.Content
             return Content;
         },
         () => $"Failed to build the asset container");
+    }
+
+    public class CommonAssetBuilder
+    {
+        public AssetContainerBuilder<Texture2D> Textures { get; } = new AssetContainerBuilder<Texture2D>();
+        public AssetContainerBuilder<SpriteFont> Font { get; } = new AssetContainerBuilder<SpriteFont>();
     }
 
 }
