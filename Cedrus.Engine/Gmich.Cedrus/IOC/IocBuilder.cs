@@ -22,19 +22,24 @@ namespace Gmich.Cedrus.IOC
     public class IocBuilder
     {
         private Dictionary<RegistrationKey, RegistrationItem> registrations = new Dictionary<RegistrationKey, RegistrationItem>();
+        private Dictionary<RegistrationKey, RegistrationItem> keyedRegistrations = new Dictionary<RegistrationKey, RegistrationItem>();
         private IocContainer container;
         private RegistrationItem lastItem;
+        private RegistrationKey lastKey;
 
         public EventHandler<IContainer> OnBuild { get; set; }
 
         private class RegistrationKey
         {
-            public RegistrationKey(Type type)
+            public RegistrationKey(Type type, object id = null)
             {
                 Type = type;
+                Id = id;
             }
             public Type Type { get; }
+            public object Id { get; set; }
         }
+
         private class RegistrationItem
         {
             public Func<object> Lambda { get; }
@@ -62,6 +67,21 @@ namespace Gmich.Cedrus.IOC
             return this;
         }
 
+        public IocBuilder IdentifiedAs(object id)
+        {
+            if (lastKey == null)
+            {
+                throw new CendrusIocException($"No registration key found for id {id}");
+            }
+            if (lastKey.Id != null)
+            {
+                throw new CendrusIocException($"Multiple ids to the same registration are not allowed. {lastKey.Id.ToString()} - {id.ToString()}");
+            }
+            registrations.Remove(lastKey);
+            lastKey.Id = id;
+            keyedRegistrations.Add(lastKey, lastItem);
+            return this;
+        }
 
         public IocBuilder RegisterModule<Module>(Module module)
               where Module : CendrusModule
@@ -126,6 +146,7 @@ namespace Gmich.Cedrus.IOC
             return AddRegistration<TAbstract>(RegistrationTag.Default, () => CreateInstance(typeof(TAbstract), typeof(TImpl)));
         }
 
+
         public IocBuilder Register<TAbstract>(Func<IContainer, TAbstract> resolver)
         {
             return AddRegistration<TAbstract>(RegistrationTag.Lambda, () => resolver(container));
@@ -159,17 +180,19 @@ namespace Gmich.Cedrus.IOC
         {
             var type = typeof(TAbstract);
             lastItem = new RegistrationItem(tag, lambda);
-            registrations.Add(new RegistrationKey(type), lastItem);
+            lastKey = new RegistrationKey(type);
+            registrations.Add(lastKey, lastItem);
             return this;
         }
 
-        private Func<object> Resolve(Type serviceType)
+        private Func<object> Resolve(Type serviceType, object id)
         {
-            var entry = registrations.FirstOrDefault(c => c.Key.Type == serviceType);
-
+            var entry = (id == null) ?
+                    registrations.FirstOrDefault(c => c.Key.Type == serviceType) :
+                    keyedRegistrations.FirstOrDefault(c => c.Key.Type == serviceType && c.Key.Id.Equals(id));
             if (entry.Value != null)
             {
-                return GetNormalizedLambda(entry.Key.Type, registrations[entry.Key]);
+                return GetNormalizedLambda(entry.Key.Type, entry.Value);
             }
             if (!serviceType.IsAbstract)
             {
@@ -181,7 +204,12 @@ namespace Gmich.Cedrus.IOC
         private Func<object> CreateInstance(Type abstractType, Type implementationType)
         {
             var ctor = implementationType.GetConstructors().FirstOrDefault();
-            var parameterTypes = ctor.GetParameters().Select(p => p.ParameterType).ToArray();
+            var parameterTypes = ctor.GetParameters()
+                .Select(p => new
+                {
+                    Type = p.ParameterType,
+                    Id = p.GetCustomAttribute<IocKeyAttribute>()
+                }).ToArray();
 
             if (parameterTypes.Length == 0)
             {
@@ -192,7 +220,9 @@ namespace Gmich.Cedrus.IOC
             }
 
             var dependencies = parameterTypes
-                .Select(t => Resolve(t))
+                .Select(t =>
+                    Resolve(t.Type, t.Id?.Key)
+                )
                 .ToArray();
 
             return () =>
@@ -279,6 +309,7 @@ namespace Gmich.Cedrus.IOC
                  .GroupBy(c => c.Key.Type);
 
             var expandedRegistrations = new Dictionary<RegistrationKey, RegistrationItem>();
+
             foreach (var entry in groupedRegistrations)
             {
                 if (entry.Count() == 1)
@@ -294,25 +325,49 @@ namespace Gmich.Cedrus.IOC
                 expandedRegistrations.Add(new RegistrationKey(enumerableType), item);
             }
             registrations = expandedRegistrations;
+
+            container = new IocContainer(BuildRegistrations(), BuildKeyed());
+
+            OnBuild?.Invoke(this, container);
+            return container;
+        }
+
+        private Dictionary<Type, IocContainer.Entry> BuildRegistrations()
+        {
             var registrationDictionary = new Dictionary<Type, IocContainer.Entry>();
-            foreach (var entry in expandedRegistrations)
+
+            foreach (var entry in registrations)
             {
                 try
                 {
-                    registrationDictionary.Add(entry.Key.Type, new IocContainer.Entry(entry.Value.RegistrationTag, GetNormalizedLambda(entry.Key.Type, entry.Value)));
+                    var containerEntry = new IocContainer.Entry(entry.Value.RegistrationTag, GetNormalizedLambda(entry.Key.Type, entry.Value));
+                    registrationDictionary.Add(entry.Key.Type, containerEntry);
                 }
                 catch (Exception ex)
                 {
                     throw new CendrusIocException($"Failed to build {entry.Value.RegistrationTag} dependency {entry.Key.Type.FullName}. {ex.Message}", ex);
                 }
             }
-
-            container = new IocContainer(registrationDictionary);
-
-            OnBuild?.Invoke(this, container);
-            return container;
+            return registrationDictionary;
         }
 
+        private Dictionary<IocContainer.Keyed, IocContainer.Entry> BuildKeyed()
+        {
+            var keyedRegistrationDictionary = new Dictionary<IocContainer.Keyed, IocContainer.Entry>();
+            foreach (var entry in keyedRegistrations)
+            {
+                try
+                {
+                    var containerEntry = new IocContainer.Entry(entry.Value.RegistrationTag, GetNormalizedLambda(entry.Key.Type, entry.Value));
+                    keyedRegistrationDictionary.Add(new IocContainer.Keyed(entry.Key.Type, entry.Key.Id), containerEntry);
+                }
+                catch (Exception ex)
+                {
+                    throw new CendrusIocException($"Failed to build {entry.Value.RegistrationTag} dependency {entry.Key.Type.FullName} with id {entry.Key.Id.ToString()}. {ex.Message}", ex);
+                }
+            }
+            return keyedRegistrationDictionary;
+        }
 
     }
 

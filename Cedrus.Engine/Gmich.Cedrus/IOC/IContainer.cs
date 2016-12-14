@@ -8,5 +8,7 @@ namespace Gmich.Cedrus.IOC
         object Resolve(Type serviceType);
         TService Resolve<TService>();
         IContainer Scope { get; }
+        object ResolveWithId(Type serviceType, object id);
+        TService ResolveWithId<TService>(object id);
     }
 }

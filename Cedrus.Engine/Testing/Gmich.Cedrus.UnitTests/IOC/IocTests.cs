@@ -63,6 +63,16 @@ namespace Gmich.Cedrus.UnitTests.IOC
 
         }
 
+        public class G
+        {
+            public G([IocKey("test")]IA a)
+            {
+                A = a;
+            }
+
+            public IA A { get; }
+        }
+
 
         [TestMethod]
         [TestCategory(Category.IOC)]
@@ -111,7 +121,6 @@ namespace Gmich.Cedrus.UnitTests.IOC
             var container = builder.Build();
 
             var f1 = container.Resolve<IF>();
-
         }
 
         [TestMethod]
@@ -347,6 +356,36 @@ namespace Gmich.Cedrus.UnitTests.IOC
             Assert.AreNotEqual(ic, id);
         }
 
+
+        [TestMethod]
+        [TestCategory(Category.IOC)]
+        public void ResolveKeyed()
+        {
+            var builder = new IocBuilder();
+
+            builder.Register<G, G>();
+            builder.RegisterSingleton<IA, A>().IdentifiedAs("test");
+            var container = builder.Build();
+
+            var g = container.Resolve<G>();
+            var a = container.ResolveWithId<IA>("test");
+
+            Assert.AreEqual(g.A, a);
+        }
+
+        [TestMethod]
+        [TestCategory(Category.IOC)]
+        public void RegisterResolveKeyedFunc()
+        {
+            var builder = new IocBuilder();
+
+            builder.Register(c => new Func<string>(() => "hello")).IdentifiedAs("test");
+            var container = builder.Build();
+
+            var func = container.ResolveWithId<Func<string>>("test");
+
+            Assert.AreEqual("hello", func());
+        }
 
         [TestMethod]
         [TestCategory(Category.IOC)]

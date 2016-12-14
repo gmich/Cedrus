@@ -97,6 +97,7 @@
     <Compile Include="IOC\IocContainer.cs" />
     <Compile Include="IOC\CleanedUpEntity.cs" />
     <Compile Include="IOC\IContainer.cs" />
+    <Compile Include="IOC\IocKeyAttribute.cs" />
     <Compile Include="Logging\IAppender.cs" />
     <Compile Include="Logging\IAuditor.cs" />
     <Compile Include="Logging\LoggingContext.cs" />

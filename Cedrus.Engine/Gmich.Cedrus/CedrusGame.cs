@@ -16,15 +16,15 @@ namespace Gmich.Cedrus
 
     public class CedrusGame : Game, IDisposable
     {
+        private readonly GraphicsDeviceManager graphics;
         private readonly GameTimeline gameTimeline;
         private readonly IContainer container;
         //private readonly InputManager inputManager;
         //private readonly LogicUpdateManager logicUpdateManager;
         //private readonly PhysicsUpdateManager physicsUpdateManager;
         //private readonly RenderManager RenderManager;
-        public IAppender Appender { get; }
 
-        private readonly GraphicsDeviceManager graphics;
+        public IAppender Appender { get; }
 
         public CedrusGame(IocBuilder builder)
         {
@@ -33,6 +33,8 @@ namespace Gmich.Cedrus
 
             builder.LogRegistrations();
             builder.RegisterModules(Assembly.GetExecutingAssembly(), type => type.FullName.EndsWith("Module"));
+
+            builder.RegisterSingleton(c => graphics.GraphicsDevice);
             builder.RegisterSingleton(c => new GameSettings(Window));
             builder.RegisterSingleton(c => Content);
             EnumerateAssemblies(assembly => builder.RegisterSingletonSubclassesOf(assembly, typeof(CommonAssetBuilder)));

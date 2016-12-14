@@ -1,4 +1,5 @@
 ﻿using Gmich.Cedrus.IOC;
+using Gmich.Cedrus.TandrixClone.Layers;
 using System;
 using System.Reflection;
 
